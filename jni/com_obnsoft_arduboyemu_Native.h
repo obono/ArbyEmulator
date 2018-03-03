@@ -10,10 +10,26 @@ extern "C" {
 /*
  * Class:     com_obnsoft_arduboyemu_Native
  * Method:    setup
- * Signature: (Ljava/lang/String;)Z
+ * Signature: (Ljava/lang/String;I)Z
  */
 JNIEXPORT jboolean JNICALL Java_com_obnsoft_arduboyemu_Native_setup
-  (JNIEnv *, jclass, jstring);
+  (JNIEnv *, jclass, jstring, jint);
+
+/*
+ * Class:     com_obnsoft_arduboyemu_Native
+ * Method:    getEEPROM
+ * Signature: ()[B
+ */
+JNIEXPORT jbyteArray JNICALL Java_com_obnsoft_arduboyemu_Native_getEEPROM
+  (JNIEnv *, jclass);
+
+/*
+ * Class:     com_obnsoft_arduboyemu_Native
+ * Method:    setEEPROM
+ * Signature: ([B)Z
+ */
+JNIEXPORT jboolean JNICALL Java_com_obnsoft_arduboyemu_Native_setEEPROM
+  (JNIEnv *, jclass, jbyteArray);
 
 /*
  * Class:     com_obnsoft_arduboyemu_Native

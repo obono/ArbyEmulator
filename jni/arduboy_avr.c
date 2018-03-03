@@ -1,5 +1,5 @@
 /*
-	Copyright (C) 2017 OBONO
+	Copyright (C) 2018 OBONO
 
 	Arduboy emulator using simavr on Android platform.
 
@@ -24,6 +24,7 @@
 #include <stdlib.h>
 
 #include <sim_avr.h>
+#include <avr_eeprom.h>
 #include <avr_ioport.h>
 #include <avr_extint.h>
 #include <sim_hex.h>
@@ -170,7 +171,7 @@ static avr_cycle_count_t update_screen(
 
 /*------------------------------------------------------------------------------------------------*/
 
-int arduboy_avr_setup(const char *hex_file_path)
+int arduboy_avr_setup(const char *hex_file_path, int cpu_freq)
 {
 	avr_global_logger_set(android_logger);
 	mod_s.avr = NULL;
@@ -210,7 +211,7 @@ int arduboy_avr_setup(const char *hex_file_path)
 
 	/* more simulation parameters */
 	avr->log = LOG_DEBUG; // LOG_NONE
-	avr->frequency = MHZ_16;
+	avr->frequency = cpu_freq;
 	avr->run_cycle_limit = avr_usec_to_cycles(avr, REFRESH_PERIOD_US * 2);
 
 	/* setup and connect display controller */
@@ -238,6 +239,32 @@ int arduboy_avr_setup(const char *hex_file_path)
 	mod_s.avr = avr;
 	LOGI("Setup AVR\n");
 	return 0;
+}
+
+bool arduboy_avr_get_eeprom(char *p_array)
+{
+	if (!mod_s.avr) {
+		return false;
+	}
+	struct mcu_t {
+		avr_t		core;
+		avr_eeprom_t	eeprom;
+	} *mcu = (struct mcu_t *) &mod_s.avr;
+	memcpy(p_array, mcu->eeprom.eeprom, mcu->eeprom.size);
+	return true;
+}
+
+bool arduboy_avr_set_eeprom(const char *p_array)
+{
+	if (!mod_s.avr) {
+		return false;
+	}
+	struct mcu_t {
+		avr_t		core;
+		avr_eeprom_t	eeprom;
+	} *mcu = (struct mcu_t *) &mod_s.avr;
+	memcpy(mcu->eeprom.eeprom, p_array, mcu->eeprom.size);
+	return true;
 }
 
 void arduboy_avr_button_event(enum button_e btn_e, bool pressed)

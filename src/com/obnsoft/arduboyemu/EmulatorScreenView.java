@@ -54,7 +54,7 @@ public class EmulatorScreenView extends View {
 
     public synchronized boolean startEmulation(String path) {
         boolean ret = false;
-        if (mEmulationThread == null && Native.setup(path)) {
+        if (mEmulationThread == null && Native.setup(path, 4000000)) {
             mEmulationThread = new Thread(new Runnable() {
                 @Override
                 public void run() {

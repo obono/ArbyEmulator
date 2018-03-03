@@ -39,7 +39,9 @@ enum button_e {
     BTN_COUNT,
 };
 
-int arduboy_avr_setup(const char *hex_file_path);
+int arduboy_avr_setup(const char *hex_file_path, int cpu_freq);
+bool arduboy_avr_get_eeprom(char *p_array);
+bool arduboy_avr_set_eeprom(const char *p_array);
 void arduboy_avr_button_event(enum button_e btn_e, bool pressed);
 bool arduboy_avr_loop(int *pixels);
 void arduboy_avr_teardown(void);
