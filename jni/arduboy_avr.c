@@ -279,6 +279,23 @@ void arduboy_avr_button_event(enum button_e btn_e, bool pressed)
 	}
 }
 
+char arduboy_avr_get_led_state(void)
+{
+	char ret = 0;
+	avr_t *avr = mod_s.avr;
+	if (avr) {
+		avr_ioport_state_t iostate;
+		avr_ioctl(avr, AVR_IOCTL_IOPORT_GETSTATE('B'), &iostate);
+		ret |= (~iostate.pin & 0x40) >> 6; // PB6 Red  -> bit 0
+		ret |= (~iostate.pin & 0x80) >> 6; // PB7 Green-> bit 1
+		ret |= (~iostate.pin & 0x20) >> 3; // PB5 Blue -> bit 2
+		ret |= (~iostate.pin & 0x01) << 3; // PB0 RX   -> bit 3
+		avr_ioctl(avr, AVR_IOCTL_IOPORT_GETSTATE('D'), &iostate);
+		ret |= (~iostate.pin & 0x20) >> 1; // PD5 TX   -> bit 4
+	}
+	return ret;
+}
+
 bool arduboy_avr_loop(int *pixels)
 {
 	avr_t *avr = mod_s.avr;

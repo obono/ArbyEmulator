@@ -86,6 +86,16 @@ JNIEXPORT void JNICALL Java_com_obnsoft_arduboyemu_Native_buttonEvent(
 
 /*
  * Class:     com_obnsoft_arduboyemu_Native
+ * Method:    getLEDState
+ * Signature: ()B
+ */
+JNIEXPORT jbyte JNICALL Java_com_obnsoft_arduboyemu_Native_getLEDState(
+        JNIEnv *env, jclass obj) {
+    return arduboy_avr_get_led_state();
+}
+
+/*
+ * Class:     com_obnsoft_arduboyemu_Native
  * Method:    loop
  * Signature: ([I)Z
  */
