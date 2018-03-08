@@ -1,13 +1,18 @@
 package com.obnsoft.arduboyemu;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
 
 public class MainActivity extends Activity {
+
+    private static final int REQUEST_OPENHEX = 1;
 
     EmulatorScreenView mEmulatorScreenView;
 
@@ -47,14 +52,58 @@ public class MainActivity extends Activity {
         findViewById(R.id.buttonB).setOnTouchListener(listener);
 
         mEmulatorScreenView = (EmulatorScreenView) findViewById(R.id.emulatorScreenView);
-        mEmulatorScreenView.startEmulation(
-                Environment.getExternalStorageDirectory().getAbsolutePath() +
-                "/ArduboyUtility/Flash/OBN-soft/hollow_v0.31.hex");
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+        case R.id.menuMainOpen:
+            Intent intent = new Intent(this, FilePickerActivity.class);
+            intent.putExtra(FilePickerActivity.INTENT_EXTRA_EXTENSIONS, new String[] {"hex"});
+            intent.putExtra(FilePickerActivity.INTENT_EXTRA_WRITEMODE, false);
+            intent.putExtra(FilePickerActivity.INTENT_EXTRA_DIRECTORY,
+                    Environment.getExternalStorageDirectory().getAbsolutePath());
+            startActivityForResult(intent, REQUEST_OPENHEX);
+            return true;
+        case R.id.menuMainAbout:
+            Utils.showVersion(this);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+        case REQUEST_OPENHEX:
+            if (resultCode == RESULT_OK) {
+                mEmulatorScreenView.openHexFile(
+                        data.getStringExtra(FilePickerActivity.INTENT_EXTRA_SELECTPATH));
+            }
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        mEmulatorScreenView.onPause();
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        mEmulatorScreenView.onResume();
+        super.onResume();
     }
 
     @Override
     protected void onDestroy() {
-        mEmulatorScreenView.stopEmulation();
+        mEmulatorScreenView.onDestroy();
         super.onDestroy();
     }
 
