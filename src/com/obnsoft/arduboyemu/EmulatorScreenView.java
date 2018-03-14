@@ -59,11 +59,29 @@ public class EmulatorScreenView extends View {
                 @Override
                 public void run() {
                     int[] pixels = new int[WIDTH * HEIGHT];
+                    long baseTime = System.currentTimeMillis();
+                    long frames = 0;
                     while (mIsAvailable) {
                         Native.loop(pixels);
                         if (!mBitmap.isRecycled()) {
                             mBitmap.setPixels(pixels, 0, WIDTH, 0, 0, WIDTH, HEIGHT);
                             postInvalidate();
+                        }
+                        if (++frames == 60) {
+                            baseTime += 1000;
+                            frames = 0;
+                        }
+                        long currentTime = System.currentTimeMillis();
+                        long targetTime = baseTime + frames * 1000 / 60;
+                        if (currentTime < targetTime) {
+                            try {
+                                Thread.sleep(targetTime - currentTime);
+                            } catch (InterruptedException e) {
+                                // do nothing
+                            }
+                        } else {
+                            baseTime = currentTime;
+                            frames = 0;
                         }
                     }
                     Native.teardown();
