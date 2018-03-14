@@ -34,7 +34,7 @@
 #include "arduboy_avr.h"
 
 #define MHZ_16 (16000000) // 16 MHz
-#define REFRESH_PERIOD_US (16666)
+#define REFRESH_PERIOD_US (16666 * 5)
 
 #define RGB(r,g,b) (0xFF000000 | (uint8_t)(r) << 16 | (uint8_t)(g) << 8 | (uint8_t)(b))
 #define BLACK RGB(0, 0, 0)
@@ -71,7 +71,6 @@ static struct arduboy_avr_mod_state {
 	ssd1306_t ssd1306;
 	bool yield;
 	uint8_t lumamap[OLED_HEIGHT_PX][OLED_WIDTH_PX];
-	int *pixels;
 } mod_s;
 
 /*------------------------------------------------------------------------------------------------*/
@@ -83,7 +82,6 @@ static void android_logger(avr_t * avr, const int level, const char * format, va
 		__android_log_print(android_level, LOG_TAG, format, ap);
 	}
 }
-
 
 static void update_lumamap(struct ssd1306_t *ssd1306)
 {
@@ -114,7 +112,7 @@ static inline float contrast_to_opacity(uint8_t contrast)
 	return contrast / 512.0 + 0.5;
 }
 
-static void render_screen(struct ssd1306_t *ssd1306)
+static void render_screen(int *pixels, struct ssd1306_t *ssd1306)
 {
 	if (!ssd1306_get_flag(ssd1306, SSD1306_FLAG_DISPLAY_ON)) {
 		return;
@@ -137,15 +135,12 @@ static void render_screen(struct ssd1306_t *ssd1306)
 	int fg_color = get_fg_colour(invert, opacity);
 
 	// Render screen
-	int *pixels = mod_s.pixels;
 	for (int y = orig_y; y >= 0 && y < OLED_HEIGHT_PX; y += vy) {
 		for (int x = orig_x; x >= 0 && x < OLED_WIDTH_PX; x += vx) {
 			*pixels++ = mod_s.lumamap[y][x] ? fg_color : bg_color;
 		}
 	}
 }
-
-/*------------------------------------------------------------------------------------------------*/
 
 static void hook_ssd1306_write_data(struct avr_irq_t *irq, uint32_t value, void *param)
 {
@@ -159,14 +154,18 @@ static void hook_ssd1306_write_data(struct avr_irq_t *irq, uint32_t value, void 
 	}
 }
 
-static avr_cycle_count_t update_screen(
+static void dummy_sleep(avr_t *avr, avr_cycle_count_t how_long)
+{
+	// do nothing
+}
+
+static avr_cycle_count_t refresh(
 		avr_t *avr,
 		avr_cycle_count_t when,
 		void *param)
 {
-	render_screen(param);
 	mod_s.yield = true;
-	return avr->cycle + avr_usec_to_cycles(avr, REFRESH_PERIOD_US);
+	return when + avr_usec_to_cycles(avr, REFRESH_PERIOD_US);
 }
 
 /*------------------------------------------------------------------------------------------------*/
@@ -212,7 +211,8 @@ int arduboy_avr_setup(const char *hex_file_path, int cpu_freq)
 	/* more simulation parameters */
 	avr->log = LOG_DEBUG; // LOG_NONE
 	avr->frequency = cpu_freq;
-	avr->run_cycle_limit = avr_usec_to_cycles(avr, REFRESH_PERIOD_US * 2);
+	avr->sleep = dummy_sleep;
+	avr->run_cycle_limit = avr_usec_to_cycles(avr, REFRESH_PERIOD_US);
 
 	/* setup and connect display controller */
 	ssd1306_t *ssd1306 = &mod_s.ssd1306;
@@ -234,7 +234,7 @@ int arduboy_avr_setup(const char *hex_file_path, int cpu_freq)
 	}
 
 	/* Setup display render timers */
-	avr_cycle_timer_register_usec(avr, REFRESH_PERIOD_US, update_screen, ssd1306);
+	avr_cycle_timer_register_usec(avr, REFRESH_PERIOD_US, refresh, NULL);
 
 	mod_s.avr = avr;
 	LOGI("Setup AVR\n");
@@ -303,13 +303,13 @@ bool arduboy_avr_loop(int *pixels)
 		return false;
 	}
 	mod_s.yield = false;
-	mod_s.pixels = pixels;
 	while (!mod_s.yield) {
 		int state = avr_run(avr);
 		if (state == cpu_Done || state == cpu_Crashed) {
 			return false;
 		}
 	}
+	render_screen(pixels, &mod_s.ssd1306);
 	return true;
 }
 

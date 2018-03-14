@@ -101,6 +101,8 @@ public class EmulatorScreenView extends View {
             @Override
             public void run() {
                 int[] pixels = new int[WIDTH * HEIGHT];
+                long baseTime = System.currentTimeMillis();
+                long frames = 0;
                 while (mIsExecuting) {
                     Native.loop(pixels);
                     synchronized (mBitmap) {
@@ -108,6 +110,22 @@ public class EmulatorScreenView extends View {
                             mBitmap.setPixels(pixels, 0, WIDTH, 0, 0, WIDTH, HEIGHT);
                         }
                         postInvalidate();
+                        if (++frames == FPS) {
+                            baseTime += ONE_SECOND;
+                            frames = 0;
+                        }
+                        long currentTime = System.currentTimeMillis();
+                        long targetTime = baseTime + frames * ONE_SECOND / FPS;
+                        if (currentTime < targetTime) {
+                            try {
+                                Thread.sleep(targetTime - currentTime);
+                            } catch (InterruptedException e) {
+                                // do nothing
+                            }
+                        } else {
+                            baseTime = currentTime;
+                            frames = 0;
+                        }
                     }
                 }
             }
