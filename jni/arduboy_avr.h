@@ -39,10 +39,19 @@ enum button_e {
     BTN_COUNT,
 };
 
-int arduboy_avr_setup(const char *hex_file_path, int cpu_freq);
+enum led_e {
+    LED_RED = 0,
+    LED_GREEN,
+    LED_BLUE,
+    LED_RX,
+    LED_TX,
+    LED_COUNT,
+};
+
+int arduboy_avr_setup(const char *hex_file_path, bool is_tuned);
 bool arduboy_avr_get_eeprom(char *p_array);
 bool arduboy_avr_set_eeprom(const char *p_array);
 void arduboy_avr_button_event(enum button_e btn_e, bool pressed);
-char arduboy_avr_get_led_state(void);
 bool arduboy_avr_loop(int *pixels);
+bool arduboy_avr_get_led_state(int *leds);
 void arduboy_avr_teardown(void);

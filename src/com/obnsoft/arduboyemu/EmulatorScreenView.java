@@ -10,7 +10,6 @@ import android.view.View;
 
 public class EmulatorScreenView extends View {
 
-    private static final int ARDUBOY_FREQ = 4000000; // 160000000
     private static final int FPS = 60;
     private static final int ONE_SECOND = 1000;
 
@@ -86,7 +85,7 @@ public class EmulatorScreenView extends View {
         if (mIsAvailable) {
             finishEmulation();
         }
-        mIsAvailable = Native.setup(path, ARDUBOY_FREQ);
+        mIsAvailable = Native.setup(path, false);
         return mIsAvailable;
     }
 
