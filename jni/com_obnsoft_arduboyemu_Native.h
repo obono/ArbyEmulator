@@ -10,10 +10,10 @@ extern "C" {
 /*
  * Class:     com_obnsoft_arduboyemu_Native
  * Method:    setup
- * Signature: (Ljava/lang/String;I)Z
+ * Signature: (Ljava/lang/String;Z)Z
  */
 JNIEXPORT jboolean JNICALL Java_com_obnsoft_arduboyemu_Native_setup
-  (JNIEnv *, jclass, jstring, jint);
+  (JNIEnv *, jclass, jstring, jboolean);
 
 /*
  * Class:     com_obnsoft_arduboyemu_Native
@@ -41,18 +41,18 @@ JNIEXPORT void JNICALL Java_com_obnsoft_arduboyemu_Native_buttonEvent
 
 /*
  * Class:     com_obnsoft_arduboyemu_Native
- * Method:    getLEDState
- * Signature: ()B
- */
-JNIEXPORT jbyte JNICALL Java_com_obnsoft_arduboyemu_Native_getLEDState
-  (JNIEnv *, jclass);
-
-/*
- * Class:     com_obnsoft_arduboyemu_Native
  * Method:    loop
  * Signature: ([I)Z
  */
 JNIEXPORT jboolean JNICALL Java_com_obnsoft_arduboyemu_Native_loop
+  (JNIEnv *, jclass, jintArray);
+
+/*
+ * Class:     com_obnsoft_arduboyemu_Native
+ * Method:    getLEDState
+ * Signature: ([I)Z
+ */
+JNIEXPORT jboolean JNICALL Java_com_obnsoft_arduboyemu_Native_getLEDState
   (JNIEnv *, jclass, jintArray);
 
 /*

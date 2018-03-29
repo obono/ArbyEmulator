@@ -25,16 +25,26 @@
 
 #include <sim_avr.h>
 #include <avr_eeprom.h>
-#include <avr_ioport.h>
+#include <avr_flash.h>
+#include <avr_watchdog.h>
 #include <avr_extint.h>
+#include <avr_ioport.h>
+#include <avr_uart.h>
+#include <avr_adc.h>
+#include <avr_timer.h>
+#include <avr_spi.h>
+#include <avr_twi.h>
+#include <avr_acomp.h>
+#include <avr_usb.h>
 #include <sim_hex.h>
 #include <sim_time.h>
+#include <sim_core_declare.h>
 #include <ssd1306_virt.h>
 
 #include "arduboy_avr.h"
 
-#define MHZ_16 (16000000) // 16 MHz
-#define REFRESH_PERIOD_US (16666 * 5)
+#define AVR_FREQUENCY (500000)
+#define REFRESH_PERIOD_US (512000) // for 1/60 frame
 
 #define RGB(r,g,b) (0xFF000000 | (uint8_t)(r) << 16 | (uint8_t)(g) << 8 | (uint8_t)(b))
 #define BLACK RGB(0, 0, 0)
@@ -71,7 +81,24 @@ static struct arduboy_avr_mod_state {
 	ssd1306_t ssd1306;
 	bool yield;
 	uint8_t lumamap[OLED_HEIGHT_PX][OLED_WIDTH_PX];
+	uint8_t led_mask;
 } mod_s;
+
+struct mcu_t {
+	avr_t			core;
+	avr_eeprom_t	eeprom;
+	avr_flash_t		selfprog;
+	avr_watchdog_t	watchdog;
+	avr_extint_t	extint;
+	avr_ioport_t	portb, portc, portd, porte, portf;
+	avr_uart_t		uart1;
+	avr_acomp_t		acomp;
+	avr_adc_t		adc;
+	avr_timer_t		timer0, timer1, timer3;
+	avr_spi_t		spi;
+	avr_twi_t		twi;
+	avr_usb_t		usb;
+};
 
 /*------------------------------------------------------------------------------------------------*/
 
@@ -79,7 +106,7 @@ static void android_logger(avr_t * avr, const int level, const char * format, va
 {
 	if (!avr || avr->log >= level) {
 		int android_level = ANDROID_LOG_SILENT - level;
-		__android_log_print(android_level, LOG_TAG, format, ap);
+		__android_log_vprint(android_level, LOG_TAG, format, ap);
 	}
 }
 
@@ -168,9 +195,15 @@ static avr_cycle_count_t refresh(
 	return when + avr_usec_to_cycles(avr, REFRESH_PERIOD_US);
 }
 
+static uint8_t get_led_analog(struct avr_t *avr, avr_timer_comp_p comp)
+{
+	return !avr_regbit_get(avr, comp->com_pin) * 0xFF;
+	//return ~avr->data[comp->r_ocr];
+}
+
 /*------------------------------------------------------------------------------------------------*/
 
-int arduboy_avr_setup(const char *hex_file_path, int cpu_freq)
+int arduboy_avr_setup(const char *hex_file_path, bool is_tuned)
 {
 	avr_global_logger_set(android_logger);
 	mod_s.avr = NULL;
@@ -210,7 +243,7 @@ int arduboy_avr_setup(const char *hex_file_path, int cpu_freq)
 
 	/* more simulation parameters */
 	avr->log = LOG_DEBUG; // LOG_NONE
-	avr->frequency = cpu_freq;
+	avr->frequency = AVR_FREQUENCY;
 	avr->sleep = dummy_sleep;
 	avr->run_cycle_limit = avr_usec_to_cycles(avr, REFRESH_PERIOD_US);
 
@@ -236,7 +269,22 @@ int arduboy_avr_setup(const char *hex_file_path, int cpu_freq)
 	/* Setup display render timers */
 	avr_cycle_timer_register_usec(avr, REFRESH_PERIOD_US, refresh, NULL);
 
+	/* Special tuning */
+	if (is_tuned) {
+		/* Disable timer1 and timer3 */
+		struct mcu_t *mcu = (struct mcu_t *) avr;
+		mcu->timer1.overflow.vector = _VECTOR(0);
+		mcu->timer1.icr.vector = _VECTOR(0);
+		mcu->timer1.comp[AVR_TIMER_COMPA].interrupt.vector = _VECTOR(0);
+		mcu->timer1.comp[AVR_TIMER_COMPB].interrupt.vector = _VECTOR(0);
+		mcu->timer3.overflow.vector = _VECTOR(0);
+		mcu->timer3.icr.vector = _VECTOR(0);
+		mcu->timer3.comp[AVR_TIMER_COMPA].interrupt.vector = _VECTOR(0);
+		mcu->timer3.comp[AVR_TIMER_COMPB].interrupt.vector = _VECTOR(0);
+	}
+
 	mod_s.avr = avr;
+	mod_s.led_mask = 0xFF;
 	LOGI("Setup AVR\n");
 	return 0;
 }
@@ -246,10 +294,7 @@ bool arduboy_avr_get_eeprom(char *p_array)
 	if (!mod_s.avr) {
 		return false;
 	}
-	struct mcu_t {
-		avr_t		core;
-		avr_eeprom_t	eeprom;
-	} *mcu = (struct mcu_t *) &mod_s.avr;
+	struct mcu_t *mcu = (struct mcu_t *) mod_s.avr;
 	memcpy(p_array, mcu->eeprom.eeprom, mcu->eeprom.size);
 	return true;
 }
@@ -259,10 +304,7 @@ bool arduboy_avr_set_eeprom(const char *p_array)
 	if (!mod_s.avr) {
 		return false;
 	}
-	struct mcu_t {
-		avr_t		core;
-		avr_eeprom_t	eeprom;
-	} *mcu = (struct mcu_t *) &mod_s.avr;
+	struct mcu_t *mcu = (struct mcu_t *) mod_s.avr;
 	memcpy(mcu->eeprom.eeprom, p_array, mcu->eeprom.size);
 	return true;
 }
@@ -277,23 +319,6 @@ void arduboy_avr_button_event(enum button_e btn_e, bool pressed)
 		avr_raise_irq(btn->irq, !pressed);
 		btn->pressed = pressed;
 	}
-}
-
-char arduboy_avr_get_led_state(void)
-{
-	char ret = 0;
-	avr_t *avr = mod_s.avr;
-	if (avr) {
-		avr_ioport_state_t iostate;
-		avr_ioctl(avr, AVR_IOCTL_IOPORT_GETSTATE('B'), &iostate);
-		ret |= (~iostate.pin & 0x40) >> 6; // PB6 Red  -> bit 0
-		ret |= (~iostate.pin & 0x80) >> 6; // PB7 Green-> bit 1
-		ret |= (~iostate.pin & 0x20) >> 3; // PB5 Blue -> bit 2
-		ret |= (~iostate.pin & 0x01) << 3; // PB0 RX   -> bit 3
-		avr_ioctl(avr, AVR_IOCTL_IOPORT_GETSTATE('D'), &iostate);
-		ret |= (~iostate.pin & 0x20) >> 1; // PD5 TX   -> bit 4
-	}
-	return ret;
 }
 
 bool arduboy_avr_loop(int *pixels)
@@ -313,6 +338,20 @@ bool arduboy_avr_loop(int *pixels)
 	return true;
 }
 
+bool arduboy_avr_get_led_state(int *leds)
+{
+	avr_t *avr = mod_s.avr;
+	if (!avr) {
+		return false;
+	}
+	struct mcu_t *mcu = (struct mcu_t *) avr;
+	leds[LED_RED]   = get_led_analog(avr, &mcu->timer1.comp[AVR_TIMER_COMPB]);
+	leds[LED_GREEN] = get_led_analog(avr, &mcu->timer0.comp[AVR_TIMER_COMPA]);
+	leds[LED_BLUE]  = get_led_analog(avr, &mcu->timer1.comp[AVR_TIMER_COMPA]);
+	leds[LED_RX]    = !(avr->data[mcu->portb.r_pin] & 0x01) * 0xFF;
+	leds[LED_TX]    = !(avr->data[mcu->portd.r_pin] & 0x20) * 0xFF;
+	return true;
+}
 
 void arduboy_avr_teardown(void)
 {

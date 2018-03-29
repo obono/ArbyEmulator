@@ -26,15 +26,13 @@
 /*
  * Class:     com_obnsoft_arduboyemu_Native
  * Method:    setup
- * Signature: (Ljava/lang/String;I)Z
+ * Signature: (Ljava/lang/String;Z)Z
  */
 JNIEXPORT jboolean JNICALL Java_com_obnsoft_arduboyemu_Native_setup(
-        JNIEnv *env, jclass obj, jstring js_path, jint cpu_freq) {
+        JNIEnv *env, jclass obj, jstring js_path, jboolean is_tuned) {
     int ret;
     const char *path = (*env)->GetStringUTFChars(env, js_path, NULL);
-
-    ret = arduboy_avr_setup(path, cpu_freq);
-
+    ret = arduboy_avr_setup(path, is_tuned);
     (*env)->ReleaseStringUTFChars(env, js_path, path);
     return !ret;
 }
@@ -65,11 +63,13 @@ JNIEXPORT jboolean JNICALL Java_com_obnsoft_arduboyemu_Native_setEEPROM(
     jboolean ret;
     jbyte *p_array = (*env)->GetByteArrayElements(env, jbyte_array, &ret);
     int array_len = (*env)->GetArrayLength(env, jbyte_array);
+
     if (array_len >= EEPROM_SIZE) {
         ret = arduboy_avr_set_eeprom((const char *) p_array);
     } else {
         ret = JNI_FALSE;
     }
+
     (*env)->ReleaseByteArrayElements(env, jbyte_array, p_array, 0);
     return ret;
 }
@@ -86,16 +86,6 @@ JNIEXPORT void JNICALL Java_com_obnsoft_arduboyemu_Native_buttonEvent(
 
 /*
  * Class:     com_obnsoft_arduboyemu_Native
- * Method:    getLEDState
- * Signature: ()B
- */
-JNIEXPORT jbyte JNICALL Java_com_obnsoft_arduboyemu_Native_getLEDState(
-        JNIEnv *env, jclass obj) {
-    return arduboy_avr_get_led_state();
-}
-
-/*
- * Class:     com_obnsoft_arduboyemu_Native
  * Method:    loop
  * Signature: ([I)Z
  */
@@ -107,6 +97,27 @@ JNIEXPORT jboolean JNICALL Java_com_obnsoft_arduboyemu_Native_loop(
 
     if (array_len >= OLED_WIDTH_PX * OLED_HEIGHT_PX) {
         ret = arduboy_avr_loop(p_array);
+    } else {
+        ret = JNI_FALSE;
+    }
+
+    (*env)->ReleaseIntArrayElements(env, jint_array, p_array, 0);
+    return ret;
+}
+
+/*
+ * Class:     com_obnsoft_arduboyemu_Native
+ * Method:    getLEDState
+ * Signature: ([I)Z
+ */
+JNIEXPORT jboolean JNICALL Java_com_obnsoft_arduboyemu_Native_getLEDState(
+        JNIEnv *env, jclass obj, jintArray jint_array) {
+    jboolean ret;
+    jint *p_array = (*env)->GetIntArrayElements(env, jint_array, &ret);
+    int array_len = (*env)->GetArrayLength(env, jint_array);
+
+    if (array_len >= LED_COUNT) {
+        ret = arduboy_avr_get_led_state(p_array);
     } else {
         ret = JNI_FALSE;
     }
