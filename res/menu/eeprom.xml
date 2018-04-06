@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+    <item
+        android:id="@+id/menuEepromRestore"
+        android:title="@string/menuRestore"
+        android:icon="@android:drawable/ic_menu_search"
+        android:showAsAction="ifRoom"
+        />
+    <item
+        android:id="@+id/menuEepromBackup"
+        android:title="@string/menuBackup"
+        android:icon="@android:drawable/ic_menu_save"
+        android:showAsAction="ifRoom"
+        />
+</menu>

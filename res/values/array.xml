@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="entriesFps">
+        <item>Quad (&#215;4)</item>
+        <item>Double (&#215;2)</item>
+        <item>Normal (&#215;1)</item>
+        <item>Half (&#215;0.5)</item>
+        <item>Quarter (&#215;0.25)</item>
+    </string-array>
+    <string-array name="entryValuesFps" translatable="false">
+        <item>240</item>
+        <item>120</item>
+        <item>60</item>
+        <item>30</item>
+        <item>15</item>
+    </string-array>
+</resources>

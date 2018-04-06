@@ -4,61 +4,13 @@
     android:layout_height="match_parent"
     tools:context="com.obnsoft.androidemu.MainActivity" >
 
-    <Button
-        android:id="@+id/buttonLeft"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true"
-        android:text="←" />
-
-    <Button
-        android:id="@+id/buttonDown"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_toRightOf="@id/buttonLeft"
-        android:text="↓" />
-
-    <Button
-        android:id="@+id/buttonUp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_above="@id/buttonDown"
-        android:layout_alignLeft="@id/buttonDown"
-        android:text="↑" />
-
-    <Button
-        android:id="@+id/buttonRight"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_toRightOf="@id/buttonDown"
-        android:text="→" />
-
-    <Button
-        android:id="@+id/buttonB"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
-        android:text="B" />
-
-    <Button
-        android:id="@+id/buttonA"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_toLeftOf="@id/buttonB"
-        android:text="A" />
-
      <com.obnsoft.arduboyemu.EmulatorScreenView
-         android:id="@+id/emulatorScreenView"
-         android:layout_width="match_parent"
+        android:id="@+id/emulatorScreenView"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
+        android:layout_alignParentBottom="true"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentRight="true"
-        android:layout_above="@id/buttonUp" />
+        android:layout_alignParentRight="true" />
 
 </RelativeLayout>

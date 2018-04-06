@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory android:title="@string/prefsCategorySettings" >
+        <ListPreference
+            android:key="fps"
+            android:defaultValue="60"
+            android:title="@string/prefsFps"
+            android:entries="@array/entriesFps"
+            android:entryValues="@array/entryValuesFps"
+            />
+        <CheckBoxPreference
+            android:key="tuning"
+            android:defaultValue="false"
+            android:title="@string/prefsTuning"
+            android:summary="@string/prefsTuningSummary"
+            />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/prefsCategoryInformation" >
+        <!-- EditTextPreference
+            android:key="key"
+            android:defaultValue="defaultValue"
+            android:title="@string/prefs_title"
+            android:inputType="text"
+            / -->
+        <Preference
+            android:key="about"
+            android:title="@string/prefsAbout"
+            />
+        <Preference
+            android:key="license"
+            android:title="@string/prefsLicense"
+            android:summary="@string/prefsLicenseSummary"
+            />
+    </PreferenceCategory>
+
+</PreferenceScreen>

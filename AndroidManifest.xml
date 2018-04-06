@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.obnsoft.arduboyemu"
-    android:versionCode="1"
-    android:versionName="0.0.1" >
+    android:versionCode="2"
+    android:versionName="0.0.2" >
 
 
     <uses-sdk
@@ -26,7 +26,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
+        <activity
+            android:name=".EepromActivity"
+            android:label="@string/appNameEeprom"
+            android:configChanges="orientation|screenSize|keyboard|keyboardHidden" />
+        <activity
+            android:name=".SettingsActivity"
+            android:label="@string/appNameSettings"
+            android:configChanges="orientation|screenSize|keyboard|keyboardHidden" />
         <activity
             android:name=".FilePickerActivity"
             android:configChanges="orientation|screenSize|keyboard|keyboardHidden" />

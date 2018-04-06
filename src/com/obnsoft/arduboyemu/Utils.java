@@ -218,7 +218,7 @@ public class Utils {
         }
         new AlertDialog.Builder(context)
                 .setIcon(android.R.drawable.ic_menu_info_details)
-                .setTitle(R.string.menuAbout)
+                .setTitle(R.string.prefsAbout)
                 .setView(aboutView)
                 .setPositiveButton(android.R.string.ok, null)
                 .show();
