@@ -8,14 +8,20 @@ import android.view.MenuItem;
 
 public class MainActivity extends Activity {
 
-    private static final int REQUEST_OPENHEX = 1;
+    private static final int REQUEST_OPEN_FLASH = 1;
 
-    EmulatorScreenView mEmulatorScreenView;
+    private MyApplication       mApp;
+    private ArduboyEmulator     mArduboyEmulator;
+    private EmulatorScreenView  mEmulatorScreenView;
+
+    /*-----------------------------------------------------------------------*/
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_activity);
+        mApp = (MyApplication) getApplication();
+        mArduboyEmulator = mApp.getArduboyEmulator();
         mEmulatorScreenView = (EmulatorScreenView) findViewById(R.id.emulatorScreenView);
     }
 
@@ -30,11 +36,11 @@ public class MainActivity extends Activity {
         switch (item.getItemId()) {
         case R.id.menuMainOpen:
             Intent intent = new Intent(this, FilePickerActivity.class);
-            intent.putExtra(FilePickerActivity.INTENT_EXTRA_EXTENSIONS, new String[] {"hex"});
+            intent.putExtra(FilePickerActivity.INTENT_EXTRA_EXTENSIONS,
+                    FilePickerActivity.EXTS_FLASH);
             intent.putExtra(FilePickerActivity.INTENT_EXTRA_WRITEMODE, false);
-            intent.putExtra(FilePickerActivity.INTENT_EXTRA_DIRECTORY,
-                    SettingsActivity.getPathFlash(this));
-            startActivityForResult(intent, REQUEST_OPENHEX);
+            intent.putExtra(FilePickerActivity.INTENT_EXTRA_DIRECTORY, mApp.getPathFlash());
+            startActivityForResult(intent, REQUEST_OPEN_FLASH);
             return true;
         case R.id.menuMainEeprom:
             startActivity(new Intent(this, EepromActivity.class));
@@ -49,11 +55,13 @@ public class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
-        case REQUEST_OPENHEX:
+        case REQUEST_OPEN_FLASH:
             if (resultCode == RESULT_OK) {
                 String path = data.getStringExtra(FilePickerActivity.INTENT_EXTRA_SELECTPATH);
-                mEmulatorScreenView.openHexFile(path);
-                SettingsActivity.setPathFlash(this, path);
+                mApp.setPathFlash(Utils.getParentPath(path));
+                if (mArduboyEmulator.initializeEmulation(path)) {
+                    mArduboyEmulator.startEmulation();
+                }
             }
             break;
         }
@@ -61,19 +69,23 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onPause() {
-        mEmulatorScreenView.onPause();
+        mArduboyEmulator.stopEmulation();
         super.onPause();
     }
 
     @Override
     protected void onResume() {
-        mEmulatorScreenView.onResume();
+        mArduboyEmulator.bindEmulatorView(mEmulatorScreenView);
+        mArduboyEmulator.startEmulation();
         super.onResume();
     }
 
     @Override
     protected void onDestroy() {
+        mArduboyEmulator.bindEmulatorView(null);
+        mArduboyEmulator.finishEmulation();
         mEmulatorScreenView.onDestroy();
+        Utils.cleanCacheFiles(this);
         super.onDestroy();
     }
 

@@ -18,8 +18,12 @@
     <string name="messageNoFiles">No files</string>
     <string name="messageInvalid">Invalid file name</string>
     <string name="messageNewFile">New file</string>
+    <string name="messageLoadSucceeded">Succeeded to load</string>
+    <string name="messageLoadFailed">Failed to load!</string>
+    <string name="messageSaveSucceeded">Succeeded to save</string>
+    <string name="messageSaveFailed">Failed to save!</string>
     <string name="messageDownloading">Downloading&#8230;</string>
-    <string name="messageDownloadFailed">Failed to download</string>
+    <string name="messageDownloadFailed">Failed to download!</string>
     <string name="prefsCategorySettings">Emulator settings</string>
     <string name="prefsCategoryInformation">Information</string>
     <string name="prefsFps">Emulation speed</string>

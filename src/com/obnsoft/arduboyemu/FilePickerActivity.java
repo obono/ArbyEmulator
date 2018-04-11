@@ -33,9 +33,12 @@ public class FilePickerActivity extends ListActivity {
     public static final String INTENT_EXTRA_WRITEMODE = "writeMode";
     public static final String INTENT_EXTRA_SELECTPATH = "selectPath";
 
-    private static final String EXT_ARDUBOY = ".arduboy";
-    private static final String EXT_HEX = ".hex";
-    private static final String EXT_EEPROM = ".eeprom";
+    public static final String EXT_ARDUBOY = ".arduboy";
+    public static final String EXT_HEX = ".hex";
+    public static final String EXT_EEPROM = ".eeprom";
+
+    public static final String[] EXTS_FLASH = new String[] { EXT_HEX, EXT_ARDUBOY };
+    public static final String[] EXTS_EEPROM = new String[] { EXT_EEPROM };
 
     private String mDirTop;
     private String mDirCurrent;

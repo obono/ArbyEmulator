@@ -3,6 +3,7 @@ package com.obnsoft.arduboyemu;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -21,7 +22,6 @@ import android.content.DialogInterface.OnClickListener;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Environment;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -34,17 +34,11 @@ import android.widget.Toast;
 
 public class Utils {
 
-    public static final File TOP_DIRECTORY =
-            new File(Environment.getExternalStorageDirectory(), "ArduboyUtility");
-    public static final File FLASH_DIRECTORY = new File(TOP_DIRECTORY, "Flash");
-    public static final File EEPROM_DIRECTORY = new File(TOP_DIRECTORY, "EEPROM");
-    public static final File SHOT_DIRECTORY = new File(TOP_DIRECTORY, "ScreenShot");
-
     private static final String SCHEME_FILE = "file";
     private static final String SCHEME_CONTENT = "content";
     private static final String SCHEME_ARDUBOY = "arduboy";
 
-    private static final int BUFFER_SIZE = 1024 * 1024;
+    private static final int BUFFER_SIZE = 1024 * 1024; // 1MiB
 
     public static void showCustomDialog(
             Context context, int iconId, int titleId, View view, final OnClickListener listener) {
@@ -105,11 +99,8 @@ public class Utils {
 
     /*-----------------------------------------------------------------------*/
 
-    public static void generateFolders() {
-        TOP_DIRECTORY.mkdir();
-        FLASH_DIRECTORY.mkdir();
-        EEPROM_DIRECTORY.mkdir();
-        SHOT_DIRECTORY.mkdir();
+    public static String getParentPath(String filePath) {
+        return new File(filePath).getParent();
     }
 
     public static String getBaseFileName(String filePath) {
@@ -118,28 +109,51 @@ public class Utils {
         return (index >= 0) ? fileName.substring(0, index) : fileName;
     }
 
+    public interface CancelCallback {
+        boolean isCencelled();
+    }
+
+    public static long transferBytes(InputStream in, OutputStream out, CancelCallback callback)
+            throws IOException {
+        byte[]  buffer = new byte[BUFFER_SIZE];
+        long    total = 0;
+        int     length;
+        while ((length = in.read(buffer)) >= 0 && !(callback != null && callback.isCencelled())) {
+            out.write(buffer, 0, length);
+            total += length;
+        }
+        out.close(); 
+        in.close();
+        return total;
+    }
+
     public static String getPathFromUri(final Context context, final Uri uri) {
         if (SCHEME_FILE.equalsIgnoreCase(uri.getScheme())) {
             return uri.getPath();
         } else if (SCHEME_CONTENT.equalsIgnoreCase(uri.getScheme())) {
-            return generateTempFile(context, uri, false);
+            return downloadFile(context, uri, false);
         } else if (SCHEME_ARDUBOY.equalsIgnoreCase(uri.getScheme())) {
-            return generateTempFile(context, Uri.parse(uri.getEncodedSchemeSpecificPart()), true);
+            return downloadFile(context, Uri.parse(uri.getEncodedSchemeSpecificPart()), true);
         }
         return null;
     }
 
-    public static String generateTempFile(final Context context, final Uri uri,
+    /*-----------------------------------------------------------------------*/
+
+    public static File generateTempFile(final Context context, String fileName) {
+        return new File(context.getCacheDir(), fileName);
+    }
+
+    public static String downloadFile(final Context context, final Uri uri,
             final boolean isNet) {
         String fileName = uri.getLastPathSegment().replaceAll("[\\\\/:*?\"<>|]", "_");
-        final File file = new File(context.getCacheDir(), fileName);
+        final File file = generateTempFile(context, fileName);
         MyAsyncTaskWithDialog.ITask task = new MyAsyncTaskWithDialog.ITask() {
             private boolean mIsCancelled = false;
             @Override
             public Boolean task(ProgressDialog dialog) {
-                InputStream in = null;
-                OutputStream out = null;
                 try {
+                    InputStream in;
                     if (isNet) {
                         HttpClient httpclient = new DefaultHttpClient();
                         HttpResponse httpResponse = httpclient.execute(new HttpGet(uri.toString()));
@@ -147,14 +161,12 @@ public class Utils {
                     } else {
                         in = context.getContentResolver().openInputStream(uri);
                     }
-                    byte[] buffer = new byte[BUFFER_SIZE];
-                    int length;
-                    out = new FileOutputStream(file);
-                    while ((length = in.read(buffer)) >= 0 && !mIsCancelled) {
-                        out.write(buffer, 0, length);
-                    }
-                    out.close(); 
-                    in.close();
+                    transferBytes(in, new FileOutputStream(file), new CancelCallback() {
+                        @Override
+                        public boolean isCencelled() {
+                            return mIsCancelled;
+                        }
+                    });
                 } catch (Exception e){
                     e.printStackTrace();
                     file.delete();

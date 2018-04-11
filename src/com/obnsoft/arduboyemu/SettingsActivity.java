@@ -1,14 +1,10 @@
 package com.obnsoft.arduboyemu;
 
-import java.io.File;
-
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.preference.CheckBoxPreference;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
@@ -17,71 +13,19 @@ import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceGroup;
-import android.preference.PreferenceManager;
+import android.view.MenuItem;
 
 public class SettingsActivity extends PreferenceActivity
         implements OnSharedPreferenceChangeListener {
 
-    private static final String PREFS_KEY_FPS           = "fps";
-    private static final String PREFS_KEY_TUNING        = "tuning";
-    private static final String PREFS_KEY_ABOUT         = "about";
-    private static final String PREFS_KEY_LICENSE       = "license";
-    private static final String PREFS_KEY_PATH_FLASH    = "path_flash";
-    private static final String PREFS_KEY_PATH_EEPROM   = "path_eeprom";
-
-    private static final String PREFS_DEFAULT           = "default";
-    private static final String PREFS_DEFAULT_FPS       = "60";
-    private static final boolean PREFS_DEFAULT_TUNING   = false;
+    private static final String PREFS_KEY_ABOUT     = "about";
+    private static final String PREFS_KEY_LICENSE   = "license";
+    private static final String PREFS_DEFAULT       = "default";
 
     private static final Uri URI_GPL3 = Uri.parse("https://www.gnu.org/licenses/gpl-3.0.html");
                                                 //"https://www.gnu.org/licenses/gpl-3.0.txt";
 
-    public static SharedPreferences getSharedPreferences(Context context) {
-        return PreferenceManager.getDefaultSharedPreferences(context);
-    }
-
-    public static int getEmulationFps(Context context) {
-        SharedPreferences sharedPrefs = getSharedPreferences(context);
-        return Integer.parseInt(sharedPrefs.getString(PREFS_KEY_FPS, PREFS_DEFAULT_FPS));
-    }
-
-    public static boolean getEmulationTuning(Context context) {
-        SharedPreferences sharedPrefs = getSharedPreferences(context);
-        return sharedPrefs.getBoolean(PREFS_KEY_TUNING, PREFS_DEFAULT_TUNING);
-    }
-
-    public static String getPathFlash(Context context) {
-        SharedPreferences sharedPrefs = getSharedPreferences(context);
-        String path = sharedPrefs.getString(PREFS_KEY_PATH_FLASH, null);
-        if (path == null || !(new File(path).exists())) {
-            path = Environment.getExternalStorageDirectory().getAbsolutePath();
-        }
-        return path;
-    }
-
-    public static boolean setPathFlash(Context context, String path) {
-        return putStringToSharedPreferences(context, PREFS_KEY_PATH_FLASH, getParentPath(path));
-    }
-
-    public static String getPathEeprom(Context context) {
-        SharedPreferences sharedPrefs = getSharedPreferences(context);
-        return sharedPrefs.getString(PREFS_KEY_PATH_EEPROM, getPathFlash(context));
-    }
-
-    public static boolean setPathEeprom(Context context, String path) {
-        return putStringToSharedPreferences(context, PREFS_KEY_PATH_EEPROM, getParentPath(path));
-    }
-
-    public static String getParentPath(String path) {
-        return new File(path).getParent();
-    }
-
-    public static boolean putStringToSharedPreferences(Context context, String key, String path) {
-        SharedPreferences sharedPrefs = getSharedPreferences(context);
-        SharedPreferences.Editor editor = sharedPrefs.edit();
-        editor.putString(key, path);
-        return editor.commit();
-    }
+    private MyApplication   mApp;
 
     /*-----------------------------------------------------------------------*/
 
@@ -140,7 +84,7 @@ public class SettingsActivity extends PreferenceActivity
         }
 
         public void setSummary(Preference pref, String key) {
-            SharedPreferences sharedPrefs = getSharedPreferences(SettingsActivity.this);
+            SharedPreferences sharedPrefs = mApp.getSharedPreferences();
             if (pref instanceof ListPreference) {
                 ListPreference listPref = (ListPreference) pref;
                 listPref.setValue(sharedPrefs.getString(key, PREFS_DEFAULT));
@@ -167,10 +111,22 @@ public class SettingsActivity extends PreferenceActivity
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getActionBar().setDisplayHomeAsUpEnabled(true);
         getFragmentManager()
             .beginTransaction()
             .replace(android.R.id.content, mFragment)
             .commit();
+        mApp = (MyApplication) getApplication();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+        case android.R.id.home:
+            finish();
+            return true;
+        }
+        return false;
     }
 
     @Override
