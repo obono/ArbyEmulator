@@ -5,10 +5,10 @@ public class Native {
         System.loadLibrary("ArduboyEmulatorNative");
     }
     public static native boolean setup(String hexFilePath, boolean isTuned);
-    public static native byte[] getEEPROM();
-    public static native boolean setEEPROM(byte[] ary);
-    public static native void buttonEvent(int key, boolean isPress);
+    public static native boolean getEeprom(byte[] ary);
+    public static native boolean setEeprom(byte[] ary);
+    public static native boolean buttonEvent(int key, boolean isPress);
     public static native boolean loop(int[] pixels);
-    public static native boolean getLEDState(int[] leds);
+    public static native boolean getLedState(int[] leds);
     public static native void teardown();
 }

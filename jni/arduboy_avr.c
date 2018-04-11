@@ -309,16 +309,17 @@ bool arduboy_avr_set_eeprom(const char *p_array)
 	return true;
 }
 
-void arduboy_avr_button_event(enum button_e btn_e, bool pressed)
+bool arduboy_avr_button_event(enum button_e btn_e, bool pressed)
 {
-	if (!mod_s.avr) {
-		return;
+	if (!mod_s.avr || btn_e >= BTN_COUNT) {
+		return false;
 	}
-	struct button_info *btn = (btn_e < BTN_COUNT) ? &buttons[btn_e] : NULL;
-	if (btn && btn->pressed != pressed) {
+	struct button_info *btn = &buttons[btn_e];
+	if (btn->pressed != pressed) {
 		avr_raise_irq(btn->irq, !pressed);
 		btn->pressed = pressed;
 	}
+	return true;
 }
 
 bool arduboy_avr_loop(int *pixels)

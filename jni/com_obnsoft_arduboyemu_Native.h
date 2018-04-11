@@ -17,26 +17,26 @@ JNIEXPORT jboolean JNICALL Java_com_obnsoft_arduboyemu_Native_setup
 
 /*
  * Class:     com_obnsoft_arduboyemu_Native
- * Method:    getEEPROM
- * Signature: ()[B
+ * Method:    getEeprom
+ * Signature: ([B)Z
  */
-JNIEXPORT jbyteArray JNICALL Java_com_obnsoft_arduboyemu_Native_getEEPROM
-  (JNIEnv *, jclass);
+JNIEXPORT jboolean JNICALL Java_com_obnsoft_arduboyemu_Native_getEeprom
+  (JNIEnv *, jclass, jbyteArray);
 
 /*
  * Class:     com_obnsoft_arduboyemu_Native
- * Method:    setEEPROM
+ * Method:    setEeprom
  * Signature: ([B)Z
  */
-JNIEXPORT jboolean JNICALL Java_com_obnsoft_arduboyemu_Native_setEEPROM
+JNIEXPORT jboolean JNICALL Java_com_obnsoft_arduboyemu_Native_setEeprom
   (JNIEnv *, jclass, jbyteArray);
 
 /*
  * Class:     com_obnsoft_arduboyemu_Native
  * Method:    buttonEvent
- * Signature: (IZ)V
+ * Signature: (IZ)Z
  */
-JNIEXPORT void JNICALL Java_com_obnsoft_arduboyemu_Native_buttonEvent
+JNIEXPORT jboolean JNICALL Java_com_obnsoft_arduboyemu_Native_buttonEvent
   (JNIEnv *, jclass, jint, jboolean);
 
 /*
@@ -49,10 +49,10 @@ JNIEXPORT jboolean JNICALL Java_com_obnsoft_arduboyemu_Native_loop
 
 /*
  * Class:     com_obnsoft_arduboyemu_Native
- * Method:    getLEDState
+ * Method:    getLedState
  * Signature: ([I)Z
  */
-JNIEXPORT jboolean JNICALL Java_com_obnsoft_arduboyemu_Native_getLEDState
+JNIEXPORT jboolean JNICALL Java_com_obnsoft_arduboyemu_Native_getLedState
   (JNIEnv *, jclass, jintArray);
 
 /*

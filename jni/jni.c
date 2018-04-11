@@ -1,5 +1,5 @@
 /*
-	Copyright (C) 2017 OBONO
+	Copyright (C) 2018 OBONO
 
 	Arduboy emulator using simavr on Android platform.
 
@@ -39,26 +39,31 @@ JNIEXPORT jboolean JNICALL Java_com_obnsoft_arduboyemu_Native_setup(
 
 /*
  * Class:     com_obnsoft_arduboyemu_Native
- * Method:    getEEPROM
- * Signature: ()[B
+ * Method:    getEeprom
+ * Signature: ([B)Z
  */
-JNIEXPORT jbyteArray JNICALL Java_com_obnsoft_arduboyemu_Native_getEEPROM(
-        JNIEnv *env, jclass obj) {
-    jbyteArray jbyte_array = (*env)->NewByteArray(env, EEPROM_SIZE);
-    if (jbyte_array != NULL) {
-        jbyte *p_array = (*env)->GetByteArrayElements(env, jbyte_array, 0);
-        arduboy_avr_get_eeprom(jbyte_array);
-        (*env)->SetByteArrayRegion(env, jbyte_array, 0, EEPROM_SIZE, p_array);
+JNIEXPORT jboolean JNICALL Java_com_obnsoft_arduboyemu_Native_getEeprom(
+        JNIEnv *env, jclass obj, jbyteArray jbyte_array) {
+    jboolean ret;
+    jbyte *p_array = (*env)->GetByteArrayElements(env, jbyte_array, &ret);
+    int array_len = (*env)->GetArrayLength(env, jbyte_array);
+
+    if (array_len >= EEPROM_SIZE) {
+        ret = arduboy_avr_get_eeprom((char *) p_array);
+    } else {
+        ret = JNI_FALSE;
     }
-    return jbyte_array;
+
+    (*env)->ReleaseByteArrayElements(env, jbyte_array, p_array, 0);
+    return ret;
 }
 
 /*
  * Class:     com_obnsoft_arduboyemu_Native
- * Method:    setEEPROM
+ * Method:    setEeprom
  * Signature: ([B)Z
  */
-JNIEXPORT jboolean JNICALL Java_com_obnsoft_arduboyemu_Native_setEEPROM(
+JNIEXPORT jboolean JNICALL Java_com_obnsoft_arduboyemu_Native_setEeprom(
         JNIEnv *env, jclass obj, jbyteArray jbyte_array) {
     jboolean ret;
     jbyte *p_array = (*env)->GetByteArrayElements(env, jbyte_array, &ret);
@@ -77,11 +82,11 @@ JNIEXPORT jboolean JNICALL Java_com_obnsoft_arduboyemu_Native_setEEPROM(
 /*
  * Class:     com_obnsoft_arduboyemu_Native
  * Method:    buttonEvent
- * Signature: (IZ)V
+ * Signature: (IZ)Z
  */
-JNIEXPORT void JNICALL Java_com_obnsoft_arduboyemu_Native_buttonEvent(
+JNIEXPORT jboolean JNICALL Java_com_obnsoft_arduboyemu_Native_buttonEvent(
         JNIEnv *env, jclass obj, jint key, jboolean is_press) {
-    arduboy_avr_button_event((enum button_e) key, is_press);
+    return arduboy_avr_button_event((enum button_e) key, is_press);
 }
 
 /*
@@ -107,10 +112,10 @@ JNIEXPORT jboolean JNICALL Java_com_obnsoft_arduboyemu_Native_loop(
 
 /*
  * Class:     com_obnsoft_arduboyemu_Native
- * Method:    getLEDState
+ * Method:    getLedState
  * Signature: ([I)Z
  */
-JNIEXPORT jboolean JNICALL Java_com_obnsoft_arduboyemu_Native_getLEDState(
+JNIEXPORT jboolean JNICALL Java_com_obnsoft_arduboyemu_Native_getLedState(
         JNIEnv *env, jclass obj, jintArray jint_array) {
     jboolean ret;
     jint *p_array = (*env)->GetIntArrayElements(env, jint_array, &ret);

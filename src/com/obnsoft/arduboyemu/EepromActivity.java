@@ -35,7 +35,8 @@ public class EepromActivity extends Activity {
         mTextViewHeader.setText(buf.toString());
 
         SpannableStringBuilder sb = new SpannableStringBuilder();  
-        byte eeprom[] = new byte[EEPROM_SIZE]; //Native.getEEPROM();
+        byte eeprom[] = new byte[EEPROM_SIZE];
+        Native.getEeprom(eeprom);
         for (int row = 0; row < EEPROM_SIZE / COLUMNS_PER_LINE; row++) {
             int start = sb.length();
             ForegroundColorSpan span = new ForegroundColorSpan(Color.GRAY);
