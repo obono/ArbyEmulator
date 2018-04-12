@@ -34,9 +34,19 @@ import android.widget.Toast;
 
 public class Utils {
 
-    private static final String SCHEME_FILE = "file";
-    private static final String SCHEME_CONTENT = "content";
-    private static final String SCHEME_ARDUBOY = "arduboy";
+    public static interface CancelCallback {
+        boolean isCencelled(long length);
+    }
+
+    public static interface ResultHandler {
+        void handleResult(Result result, File file);
+    }
+
+    /*-----------------------------------------------------------------------*/
+
+    private static final String SCHEME_FILE     = "file";
+    private static final String SCHEME_CONTENT  = "content";
+    private static final String SCHEME_ARDUBOY  = "arduboy";
 
     private static final int BUFFER_SIZE = 1024 * 1024; // 1MiB
 
@@ -79,14 +89,23 @@ public class Utils {
         dlg.show();
     }
 
-    public static void showListDialog(final Context context, int iconId, int titleId,
-            String[] items, OnClickListener listener) {
-        new AlertDialog.Builder(context)
-                .setIcon(iconId)
-                .setTitle(titleId)
-                .setItems(items, listener)
-                .setNegativeButton(android.R.string.cancel, (OnClickListener) null)
-                .show();
+    public static void showMessageDialog(
+            Context context, int iconId, int titleId, int messageId, OnClickListener listener) {
+        AlertDialog dlg = new AlertDialog.Builder(context)
+                .setMessage(messageId)
+                .setPositiveButton(android.R.string.ok, listener)
+                .create();
+        if (titleId != 0) {
+            dlg.setTitle(titleId);
+            if (iconId != 0) {
+                dlg.setIcon(iconId);
+            }
+        }
+        if (listener != null) {
+            dlg.setButton(AlertDialog.BUTTON_NEGATIVE,
+                    context.getText(android.R.string.cancel), (OnClickListener) null);
+        }
+        dlg.show();
     }
 
     public static void showToast(Context context, int msgId) {
@@ -109,44 +128,41 @@ public class Utils {
         return (index >= 0) ? fileName.substring(0, index) : fileName;
     }
 
-    public interface CancelCallback {
-        boolean isCencelled();
-    }
-
     public static long transferBytes(InputStream in, OutputStream out, CancelCallback callback)
             throws IOException {
         byte[]  buffer = new byte[BUFFER_SIZE];
-        long    total = 0;
-        int     length;
-        while ((length = in.read(buffer)) >= 0 && !(callback != null && callback.isCencelled())) {
-            out.write(buffer, 0, length);
-            total += length;
+        long    length = 0;
+        int     readLength;
+        while (!(callback != null && callback.isCencelled(length))
+                && (readLength = in.read(buffer)) >= 0) {
+            out.write(buffer, 0, readLength);
+            length += readLength;
         }
         out.close(); 
         in.close();
-        return total;
+        return length;
     }
 
-    public static String getPathFromUri(final Context context, final Uri uri) {
+    public static void downloadFile(final Context context, Uri uri, final ResultHandler handler) {
+        final Uri actualUri;
+        final boolean isNet;
         if (SCHEME_FILE.equalsIgnoreCase(uri.getScheme())) {
-            return uri.getPath();
+            if (handler != null) {
+                handler.handleResult(Result.SUCCEEDED, new File(uri.getPath()));
+            }
+            return;
         } else if (SCHEME_CONTENT.equalsIgnoreCase(uri.getScheme())) {
-            return downloadFile(context, uri, false);
+            actualUri = uri;
+            isNet = false;
         } else if (SCHEME_ARDUBOY.equalsIgnoreCase(uri.getScheme())) {
-            return downloadFile(context, Uri.parse(uri.getEncodedSchemeSpecificPart()), true);
+            actualUri = Uri.parse(uri.getEncodedSchemeSpecificPart());
+            isNet = true;
+        } else {
+            actualUri = uri;
+            isNet = true;
         }
-        return null;
-    }
 
-    /*-----------------------------------------------------------------------*/
-
-    public static File generateTempFile(final Context context, String fileName) {
-        return new File(context.getCacheDir(), fileName);
-    }
-
-    public static String downloadFile(final Context context, final Uri uri,
-            final boolean isNet) {
-        String fileName = uri.getLastPathSegment().replaceAll("[\\\\/:*?\"<>|]", "_");
+        String fileName = actualUri.getLastPathSegment().replaceAll("[\\\\/:*?\"<>|]", "_");
         final File file = generateTempFile(context, fileName);
         MyAsyncTaskWithDialog.ITask task = new MyAsyncTaskWithDialog.ITask() {
             private boolean mIsCancelled = false;
@@ -156,14 +172,15 @@ public class Utils {
                     InputStream in;
                     if (isNet) {
                         HttpClient httpclient = new DefaultHttpClient();
-                        HttpResponse httpResponse = httpclient.execute(new HttpGet(uri.toString()));
+                        HttpResponse httpResponse = httpclient
+                                .execute(new HttpGet(actualUri.toString()));
                         in = httpResponse.getEntity().getContent();
                     } else {
-                        in = context.getContentResolver().openInputStream(uri);
+                        in = context.getContentResolver().openInputStream(actualUri);
                     }
                     transferBytes(in, new FileOutputStream(file), new CancelCallback() {
                         @Override
-                        public boolean isCencelled() {
+                        public boolean isCencelled(long length) {
                             return mIsCancelled;
                         }
                     });
@@ -180,19 +197,16 @@ public class Utils {
             }
             @Override
             public void post(Result result) {
-                switch (result) {
-                case FAILED:
-                    Utils.showToast(context, R.string.messageDownloadFailed);
-                default:
-                case CANCELLED:
-                    file.delete();
-                case SUCCEEDED:
-                    break;
+                if (handler != null) {
+                    handler.handleResult(result, file);
                 }
             }
         };
         MyAsyncTaskWithDialog.execute(context, true, R.string.messageDownloading, task);
-        return file.getAbsolutePath();
+    }
+
+    public static File generateTempFile(final Context context, String fileName) {
+        return new File(context.getCacheDir(), fileName);
     }
 
     public static void cleanCacheFiles(Context context) {

@@ -11,6 +11,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Locale;
 
+import com.obnsoft.arduboyemu.Utils.CancelCallback;
+
 import android.content.Context;
 
 public class ArduboyEmulator {
@@ -23,6 +25,13 @@ public class ArduboyEmulator {
     private static final int ONE_SECOND = 1000;
     private static final String FLASH_WORK_FILE_NAME = "work.hex";
     private static final String EEPROM_FILE_NAME = "eeprom.bin";
+
+    private static final CancelCallback EEPROM_CALLBACK = new CancelCallback() {
+        @Override
+        public boolean isCencelled(long length) {
+            return (length >= EEPROM_SIZE);
+        }
+    };
 
     private MyApplication       mApp;
     private EmulatorScreenView  mEmulatorView;
@@ -153,11 +162,24 @@ public class ArduboyEmulator {
         }
     }
 
+    public void clearEeprom() {
+        defaultEeprom();
+        if (mIsEmulating) {
+            Native.setEeprom(mEeprom);
+        } else {
+            saveEeprom();
+        }
+    }
+
     public boolean restoreEeprom(String path) {
         try {
             boolean ret = inputEeprom(new FileInputStream(new File(path)), false);
             if (ret) {
-                saveEeprom();
+                if (mIsEmulating) {
+                    Native.setEeprom(mEeprom);
+                } else {
+                    saveEeprom();
+                }
             }
             return ret;
         } catch (IOException e) {
@@ -187,7 +209,7 @@ public class ArduboyEmulator {
             throws FileNotFoundException, IOException {
         try {
             ByteArrayOutputStream out = new ByteArrayOutputStream(EEPROM_SIZE);
-            long length = Utils.transferBytes(in, out, null);
+            long length = Utils.transferBytes(in, out, EEPROM_CALLBACK);
             if (length >= EEPROM_SIZE) {
                 mEeprom = out.toByteArray();
                 return true;
@@ -208,7 +230,7 @@ public class ArduboyEmulator {
     }
 
     private boolean outputEeprom(OutputStream out) throws IOException {
-        long length = Utils.transferBytes(new ByteArrayInputStream(mEeprom), out, null);
+        long length = Utils.transferBytes(new ByteArrayInputStream(mEeprom), out, EEPROM_CALLBACK);
         return (length >= EEPROM_SIZE);
     }
 

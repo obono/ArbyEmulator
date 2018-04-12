@@ -18,6 +18,7 @@ import android.view.MenuItem;
 public class SettingsActivity extends PreferenceActivity
         implements OnSharedPreferenceChangeListener {
 
+    private static final String PREFS_KEY_TUNING    = "tuning";
     private static final String PREFS_KEY_ABOUT     = "about";
     private static final String PREFS_KEY_LICENSE   = "license";
     private static final String PREFS_DEFAULT       = "default";
@@ -146,6 +147,10 @@ public class SettingsActivity extends PreferenceActivity
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         mFragment.setSummary(key);
+        if (PREFS_KEY_TUNING.equals(key)) {
+            Utils.showMessageDialog(this, android.R.drawable.ic_dialog_alert, R.string.prefsTuning,
+                    R.string.messageNoticeTuning, null);
+        }
     }
 
 }

@@ -11,10 +11,12 @@
     <string name="menuOpen">Open Flash image</string>
     <string name="menuEeprom">Control EEPROM</string>
     <string name="menuSettings">Settings</string>
-    <string name="menuBackup">Backup</string>
-    <string name="menuRestore">Restore</string>
+    <string name="menuClear">Clear EEPROM</string>
+    <string name="menuBackup">Backup EEPROM</string>
+    <string name="menuRestore">Restore EEPROM</string>
     <string name="menuUpper">Upper</string>
     <string name="menuBack">Back</string>
+    <string name="menuQuit">Quit application</string>
     <string name="messageNoFiles">No files</string>
     <string name="messageInvalid">Invalid file name</string>
     <string name="messageNewFile">New file</string>
@@ -24,6 +26,10 @@
     <string name="messageSaveFailed">Failed to save!</string>
     <string name="messageDownloading">Downloading&#8230;</string>
     <string name="messageDownloadFailed">Failed to download!</string>
+    <string name="messageConfirmLoad">Are you sure to load?</string>
+    <string name="messageConfirmClear">Are you sure to clear?</string>
+    <string name="messageConfirmQuit">Are you sure to quit?</string>
+    <string name="messageNoticeTuning">This configuration is applied after restarting emulation.</string>
     <string name="prefsCategorySettings">Emulator settings</string>
     <string name="prefsCategoryInformation">Information</string>
     <string name="prefsFps">Emulation speed</string>

@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.obnsoft.arduboyemu"
-    android:versionCode="3"
-    android:versionName="0.0.3" >
+    android:versionCode="4"
+    android:versionName="0.0.4" >
 
 
     <uses-sdk
         android:minSdkVersion="14"
         android:targetSdkVersion="14" />
 
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
         android:name=".MyApplication"
@@ -17,24 +19,49 @@
         android:icon="@drawable/ic_launcher"
         android:label="@string/appName"
         android:theme="@style/AppTheme" >
+
         <activity
             android:name=".MainActivity"
             android:label="@string/appName"
             android:launchMode="singleTask"
             android:configChanges="orientation|screenSize|keyboard|keyboardHidden" >
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="*/*" />
+                <data android:pathPattern=".*\\.hex" />
+                <data android:pathPattern=".*\\.arduboy" />
+                <data android:pathPattern=".*\\.eeprom" />
+                <data android:host="*" />
+                <data android:scheme="file" />
+                <data android:scheme="content" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="arduboy" />
+            </intent-filter>
+
         </activity>
+
         <activity
             android:name=".EepromActivity"
             android:label="@string/appNameEeprom"
             android:configChanges="orientation|screenSize|keyboard|keyboardHidden" />
+
         <activity
             android:name=".SettingsActivity"
             android:label="@string/appNameSettings"
             android:configChanges="orientation|screenSize|keyboard|keyboardHidden" />
+
         <activity
             android:name=".FilePickerActivity"
             android:configChanges="orientation|screenSize|keyboard|keyboardHidden" />

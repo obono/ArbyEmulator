@@ -1,7 +1,16 @@
 package com.obnsoft.arduboyemu;
 
+import java.io.File;
+import java.util.Locale;
+
+import com.obnsoft.arduboyemu.MyAsyncTaskWithDialog.Result;
+import com.obnsoft.arduboyemu.Utils.ResultHandler;
+
 import android.app.Activity;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -23,6 +32,15 @@ public class MainActivity extends Activity {
         mApp = (MyApplication) getApplication();
         mArduboyEmulator = mApp.getArduboyEmulator();
         mEmulatorScreenView = (EmulatorScreenView) findViewById(R.id.emulatorScreenView);
+        Intent intent = getIntent();
+        if (intent != null) {
+            handleIntent(intent);
+        }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        handleIntent(intent);
     }
 
     @Override
@@ -59,12 +77,21 @@ public class MainActivity extends Activity {
             if (resultCode == RESULT_OK) {
                 String path = data.getStringExtra(FilePickerActivity.INTENT_EXTRA_SELECTPATH);
                 mApp.setPathFlash(Utils.getParentPath(path));
-                if (mArduboyEmulator.initializeEmulation(path)) {
-                    mArduboyEmulator.startEmulation();
-                }
+                startEmulation(path);
             }
             break;
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        Utils.showMessageDialog(this, 0, R.string.menuQuit, R.string.messageConfirmQuit,
+                new OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        finish();
+                    }
+        });
     }
 
     @Override
@@ -87,6 +114,56 @@ public class MainActivity extends Activity {
         mEmulatorScreenView.onDestroy();
         Utils.cleanCacheFiles(this);
         super.onDestroy();
+    }
+
+    /*-----------------------------------------------------------------------*/
+
+    private void startEmulation(String path) {
+        if (mArduboyEmulator.initializeEmulation(path)) {
+            mArduboyEmulator.startEmulation();
+        }
+    }
+
+    private void handleIntent(Intent intent) {
+        String action = intent.getAction();
+        Uri uri = intent.getData();
+        if (Intent.ACTION_VIEW.equals(action) && uri != null) {
+            Utils.downloadFile(this, uri, new ResultHandler() {
+                @Override
+                public void handleResult(Result result, File file) {
+                    switch (result) {
+                    case FAILED:
+                        Utils.showToast(MainActivity.this, R.string.messageDownloadFailed);
+                        // go to following code
+                    default:
+                    case CANCELLED:
+                        file.delete();
+                        break;
+                    case SUCCEEDED:
+                        final String path = file.getAbsolutePath();
+                        if (path.toLowerCase(Locale.getDefault())
+                                .endsWith(FilePickerActivity.EXT_EEPROM)) {
+                            Utils.showMessageDialog(MainActivity.this, 0, R.string.menuEeprom,
+                                    R.string.messageConfirmLoad, new OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            mArduboyEmulator.restoreEeprom(path);
+                                        }
+                            });
+                        } else {
+                            Utils.showMessageDialog(MainActivity.this, 0, R.string.menuOpen,
+                                    R.string.messageConfirmLoad, new OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            startEmulation(path);
+                                        }
+                            });
+                        }
+                        break;
+                    }
+                }
+            });
+        }
     }
 
 }

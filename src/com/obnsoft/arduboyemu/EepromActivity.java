@@ -1,7 +1,9 @@
 package com.obnsoft.arduboyemu;
 
 import android.app.Activity;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.DialogInterface.OnClickListener;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Typeface;
@@ -64,6 +66,16 @@ public class EepromActivity extends Activity {
         switch (item.getItemId()) {
         case android.R.id.home:
             finish();
+            return true;
+        case R.id.menuEepromClear:
+            Utils.showMessageDialog(this, 0, R.string.menuClear, R.string.messageConfirmClear,
+                    new OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            mApp.getArduboyEmulator().clearEeprom();
+                            refreshDump();
+                        }
+            });
             return true;
         case R.id.menuEepromRestore:
             intent.putExtra(FilePickerActivity.INTENT_EXTRA_WRITEMODE, false);
