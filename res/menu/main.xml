@@ -3,19 +3,19 @@
     <item
         android:id="@+id/menuMainOpen"
         android:title="@string/menuOpen"
-        android:icon="@android:drawable/ic_menu_search"
+        android:icon="@drawable/ic_menu_open_flash"
         android:showAsAction="ifRoom"
         />
     <item
         android:id="@+id/menuMainEeprom"
         android:title="@string/menuEeprom"
-        android:icon="@android:drawable/ic_menu_slideshow"
+        android:icon="@drawable/ic_menu_eeprom"
         android:showAsAction="ifRoom"
         />
     <item
         android:id="@+id/menuMainSettings"
         android:title="@string/menuSettings"
-        android:icon="@android:drawable/ic_menu_preferences"
+        android:icon="@drawable/ic_menu_settings"
         android:showAsAction="ifRoom"
         />
 </menu>

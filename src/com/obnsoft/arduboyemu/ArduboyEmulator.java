@@ -14,6 +14,7 @@ import java.util.Locale;
 import com.obnsoft.arduboyemu.Utils.CancelCallback;
 
 import android.content.Context;
+import android.graphics.Color;
 
 public class ArduboyEmulator {
 
@@ -22,6 +23,14 @@ public class ArduboyEmulator {
     public static final int EEPROM_SIZE = 1024;
 
     private static final int PIXELS_SIZE = SCREEN_WIDTH * SCREEN_HEIGHT;
+
+    private static final int LED_RED    = 0;
+    private static final int LED_GREEN  = 1;
+    private static final int LED_BLUE   = 2;
+    private static final int LED_RX     = 3;
+    private static final int LED_TX     = 4;
+    private static final int LEDS_SIZE  = 5;
+
     private static final int ONE_SECOND = 1000;
     private static final String FLASH_WORK_FILE_NAME = "work.hex";
     private static final String EEPROM_FILE_NAME = "eeprom.bin";
@@ -39,6 +48,7 @@ public class ArduboyEmulator {
     private Thread      mEmulationThread;
     private boolean     mIsEmulationAvailable;
     private boolean     mIsEmulating;
+    private boolean     mIsCharging;
     private byte[]      mEeprom;
 
     /*-----------------------------------------------------------------------*/
@@ -46,6 +56,23 @@ public class ArduboyEmulator {
     public ArduboyEmulator(MyApplication app) {
         mApp = app;
         loadEeprom();
+    }
+
+    public boolean isEmulating() {
+        return mIsEmulating;
+    }
+
+    public synchronized void setCharging(boolean isCharging) {
+        mIsCharging = isCharging;
+        if (!mIsEmulating && mEmulatorView != null) {
+            mEmulatorView.updateLed(Color.BLACK, false, false, mIsCharging);
+            mEmulatorView.postInvalidate();
+        }
+    }
+
+    public synchronized void bindEmulatorView(EmulatorScreenView emulatorView) {
+        mEmulatorView = emulatorView;
+        setCharging(mIsCharging);
     }
 
     /*-----------------------------------------------------------------------*/
@@ -67,10 +94,6 @@ public class ArduboyEmulator {
         return mIsEmulationAvailable;
     }
 
-    public synchronized void bindEmulatorView(EmulatorScreenView emulatorView) {
-        mEmulatorView = emulatorView;
-    }
-
     public synchronized boolean startEmulation() {
         if (!mIsEmulationAvailable) {
             return false;
@@ -83,6 +106,7 @@ public class ArduboyEmulator {
             public void run() {
                 int fps = mApp.getEmulationFps();
                 int[] pixels = new int[PIXELS_SIZE];
+                int[] leds = new int[LEDS_SIZE];
                 long baseTime = System.currentTimeMillis();
                 long frames = 0;
 
@@ -95,8 +119,13 @@ public class ArduboyEmulator {
                         }
                     }
                     Native.loop(pixels);
+                    Native.getLedState(leds);
                     if (mEmulatorView != null) {
                         mEmulatorView.updateScreen(pixels);
+                        mEmulatorView.updateLed(
+                                Color.rgb(leds[LED_RED], leds[LED_GREEN], leds[LED_BLUE]),
+                                (leds[LED_RX] != 0), (leds[LED_TX] != 0), mIsCharging);
+                        mEmulatorView.postInvalidate();
                     }
                     if (++frames >= fps) {
                         baseTime += ONE_SECOND;

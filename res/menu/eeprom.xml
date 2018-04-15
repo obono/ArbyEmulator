@@ -3,19 +3,19 @@
     <item
         android:id="@+id/menuEepromClear"
         android:title="@string/menuClear"
-        android:icon="@android:drawable/ic_menu_delete"
+        android:icon="@drawable/ic_menu_eeprom_clear"
         android:showAsAction="ifRoom"
         />
     <item
         android:id="@+id/menuEepromRestore"
         android:title="@string/menuRestore"
-        android:icon="@android:drawable/ic_menu_search"
+        android:icon="@drawable/ic_menu_eeprom_restore"
         android:showAsAction="ifRoom"
         />
     <item
         android:id="@+id/menuEepromBackup"
         android:title="@string/menuBackup"
-        android:icon="@android:drawable/ic_menu_save"
+        android:icon="@drawable/ic_menu_eeprom_backup"
         android:showAsAction="ifRoom"
         />
 </menu>

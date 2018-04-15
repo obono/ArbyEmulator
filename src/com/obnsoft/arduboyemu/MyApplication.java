@@ -3,7 +3,12 @@ package com.obnsoft.arduboyemu;
 import java.io.File;
 
 import android.app.Application;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.os.BatteryManager;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 
@@ -17,7 +22,8 @@ public class MyApplication extends Application {
     private static final String PREFS_DEFAULT_FPS       = "60";
     private static final boolean PREFS_DEFAULT_TUNING   = false;
 
-    private ArduboyEmulator mArduboyEmulator;
+    private ArduboyEmulator     mArduboyEmulator;
+    private BroadcastReceiver   mChargeStateReveiver;
 
     /*-----------------------------------------------------------------------*/
 
@@ -25,10 +31,30 @@ public class MyApplication extends Application {
     public void onCreate() {
         super.onCreate();
         mArduboyEmulator = new ArduboyEmulator(this);
+
+        /*  Get current charging status  */
+        Intent intent = registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+        int status = intent.getIntExtra(BatteryManager.EXTRA_STATUS,
+                BatteryManager.BATTERY_STATUS_UNKNOWN);
+        mArduboyEmulator.setCharging((status == BatteryManager.BATTERY_STATUS_CHARGING ||
+                status == BatteryManager.BATTERY_STATUS_FULL));
+
+        /*  Detect power connection  */
+        mChargeStateReveiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String action = intent.getAction();
+                mArduboyEmulator.setCharging(Intent.ACTION_POWER_CONNECTED.equals(action));
+            }
+        };
+        IntentFilter ifilter = new IntentFilter(Intent.ACTION_POWER_CONNECTED);
+        ifilter.addAction(Intent.ACTION_POWER_DISCONNECTED);
+        registerReceiver(mChargeStateReveiver, ifilter);
     }
 
     @Override
     public void onTerminate() {
+        unregisterReceiver(mChargeStateReveiver);
         super.onTerminate();
     }
 
