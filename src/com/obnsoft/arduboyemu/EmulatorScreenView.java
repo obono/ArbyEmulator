@@ -54,6 +54,7 @@ public class EmulatorScreenView extends View {
 
     private static final int TOUCH_STATE_MAX = 10;
 
+    private float       mBaseX, mBaseY, mScale;
     private DrawObject  mSkin;
     private DrawObject  mScreen;
     private DrawObject  mLedRgbFlare;
@@ -61,7 +62,8 @@ public class EmulatorScreenView extends View {
     private boolean     mIsDrawButton;
     private Paint       mButtonPaint;
 
-    private int         mLedRgbColor;
+    private int         mLedRgbColor = Color.BLACK;
+    private float[]     mLedRgbWorkHSV = new float[3];
     private boolean[]   mLedUartOn = new boolean[LED_UART_ID_MAX];
     private boolean[]   mButtonState = new boolean[Native.BUTTON_MAX];
     private PointF[]    mButtonPosition = new PointF[Native.BUTTON_MAX];
@@ -72,6 +74,7 @@ public class EmulatorScreenView extends View {
     /*-----------------------------------------------------------------------*/
 
     class DrawObject {
+
         public Bitmap bitmap;
         public Matrix matrix;
         public Paint  paint;
@@ -95,14 +98,13 @@ public class EmulatorScreenView extends View {
             this.paint  = (paint  == null) ? new Paint()  : paint;
         }
 
-        public void setCoords(float x, float y, float w, float h, float scale, float sx, float sy) {
-            matrix.setScale(scale * w / bitmap.getWidth(), scale * h / bitmap.getHeight());
-            matrix.postTranslate(sx + x * scale, sy + y * scale);
+        public void setCoords(float x, float y, float w, float h) {
+            matrix.setScale(mScale * w / bitmap.getWidth(), mScale * h / bitmap.getHeight());
+            matrix.postTranslate(mBaseX + x * mScale, mBaseY + y * mScale);
         }
 
-        public void setCoordsCenter(
-                float x, float y, float w, float h, float scale, float sx, float sy) {
-            setCoords(x - w / 2f, y - h / 2f, w, h, scale, sx, sy);
+        public void setCoordsCenter(float x, float y, float w, float h) {
+            setCoords(x - w / 2f, y - h / 2f, w, h);
         }
 
         public synchronized void draw(Canvas canvas) {
@@ -168,39 +170,38 @@ public class EmulatorScreenView extends View {
         /*  Skin position  */
         boolean isLandscape = (w > h);
         int tmpH = isLandscape ? SCREEN_Y * 2 + SCREEN_H : SKIN_H;
-        float scale = Math.max(Math.min(w / SKIN_W, h / tmpH), 1);
-        float skinX = (w - SKIN_W * scale) / 2f;
-        float skinY = (h - tmpH * scale) / 2f;
-        mSkin.setCoords(0, 0, SKIN_W, SKIN_H, scale, skinX, skinY);
-        mScreen.setCoords(SCREEN_X, SCREEN_Y, SCREEN_W, SCREEN_H, scale, skinX, skinY);
-        mLedRgbFlare.setCoordsCenter(LED_RGB_X, LED_RGB_Y,
-                LED_FLARE_SIZE, LED_FLARE_SIZE, scale, skinX, skinY);
+        mScale = Math.max(Math.min(w / SKIN_W, h / tmpH), 1);
+        mBaseX = (w - SKIN_W * mScale) / 2f;
+        mBaseY = (h - tmpH * mScale) / 2f;
+        mSkin.setCoords(0, 0, SKIN_W, SKIN_H);
+        mScreen.setCoords(SCREEN_X, SCREEN_Y, SCREEN_W, SCREEN_H);
         for (int i = 0; i < LED_UART_ID_MAX; i++) {
             mLedUartFlare[i].setCoordsCenter(LED_UART_X + LED_UART_GX * i, LED_UART_Y,
-                    LED_FLARE_SIZE, LED_FLARE_SIZE, scale, skinX, skinY);
+                    LED_FLARE_SIZE, LED_FLARE_SIZE);
         }
 
         /*  Buttons position  */
+        float buttonScale = mScale;
         if (isLandscape) {
             DisplayMetrics displayMetrics = getContext().getResources().getDisplayMetrics();
-            scale = displayMetrics.density * 2f;
+            buttonScale = displayMetrics.density * 2f;
         }
         float dpadX, dpadY, abX, abY;
-        float dpadGap = BUTTON_DPAD_G * scale;
-        float abGapX = BUTTON_AB_GX * scale;
-        float abGapY = BUTTON_AB_GY * scale;
-        mButtonSize = BUTTON_SIZE * scale;
+        float dpadGap = BUTTON_DPAD_G * buttonScale;
+        float abGapX = BUTTON_AB_GX * buttonScale;
+        float abGapY = BUTTON_AB_GY * buttonScale;
+        mButtonSize = BUTTON_SIZE * buttonScale;
         if (isLandscape) {
-            dpadX = (BUTTON_SIZE + BUTTON_DPAD_G) * scale;
+            dpadX = (BUTTON_SIZE + BUTTON_DPAD_G) * buttonScale;
             dpadY = h - dpadX;
-            abX = w - (BUTTON_SIZE + BUTTON_AB_GX) * scale;
-            abY = h - (BUTTON_SIZE + BUTTON_AB_GY) * scale;
+            abX = w - (BUTTON_SIZE + BUTTON_AB_GX) * buttonScale;
+            abY = h - (BUTTON_SIZE + BUTTON_AB_GY) * buttonScale;
             mIsDrawButton = true;
         } else {
-            dpadX = skinX + BUTTON_DPAD_X * scale;
-            dpadY = skinY + BUTTON_DPAD_Y * scale;
-            abX = skinX + BUTTON_AB_X * scale;
-            abY = skinY + BUTTON_AB_Y * scale;
+            dpadX = mBaseX + BUTTON_DPAD_X * buttonScale;
+            dpadY = mBaseY + BUTTON_DPAD_Y * buttonScale;
+            abX = mBaseX + BUTTON_AB_X * buttonScale;
+            abY = mBaseY + BUTTON_AB_Y * buttonScale;
             mIsDrawButton = false;
         }
         mButtonPosition[Native.BUTTON_UP   ].set(dpadX, dpadY - dpadGap);
@@ -214,16 +215,30 @@ public class EmulatorScreenView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+
+        /*  Arduboy  */
         mSkin.draw(canvas);
         mScreen.draw(canvas);
-        mLedRgbFlare.paint.setColor(mLedRgbColor);
-        mLedRgbFlare.draw(canvas);
+
+        /*  Flare of RGB LED  */
+        if (mLedRgbColor != Color.BLACK) {
+            Color.colorToHSV(mLedRgbColor, mLedRgbWorkHSV);
+            float flareSize = LED_FLARE_SIZE * (float) Math.sqrt(mLedRgbWorkHSV[2] * 4f);
+            mLedRgbWorkHSV[2] = 1f;
+            mLedRgbFlare.paint.setColor(Color.HSVToColor(mLedRgbWorkHSV));
+            mLedRgbFlare.setCoordsCenter(LED_RGB_X, LED_RGB_Y, flareSize, flareSize);
+            mLedRgbFlare.draw(canvas);
+        }
+
+        /*  Flares of UART LEDs  */
         for (int i = 0; i < LED_UART_ID_MAX; i++) {
             if (mLedUartOn[i]) {
                 mLedUartFlare[i].paint.setColor(LED_UART_FLARE_COLORS[i]);
                 mLedUartFlare[i].draw(canvas);
             }
         }
+
+        /*  Buttons  */
         if (mIsDrawButton) {
             for (int buttonIdx = 0; buttonIdx < Native.BUTTON_MAX; buttonIdx++) {
                 mButtonPaint.setColor(mButtonState[buttonIdx] ? BUTTON_COLOR_ON : BUTTON_COLOR_OFF);
