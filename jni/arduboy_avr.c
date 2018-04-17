@@ -49,24 +49,20 @@
 #define RGB(r,g,b) (0xFF000000 | (uint8_t)(r) << 16 | (uint8_t)(g) << 8 | (uint8_t)(b))
 #define BLACK RGB(0, 0, 0)
 
-static struct button_info {
-	enum button_e btn_id;
-	avr_irq_t *irq;
-	const char *name;
+static const struct button_info {
 	char port_name;
 	int port_idx;
-	bool pressed;
 } buttons[BTN_COUNT] = {
-	{ BTN_UP, NULL, "btn.up", 'F', 7 },
-	{ BTN_DOWN, NULL, "btn.down", 'F', 4 },
-	{ BTN_LEFT, NULL, "btn.left", 'F', 5 },
-	{ BTN_RIGHT, NULL, "btn.right", 'F', 6 },
-	{ BTN_A, NULL, "btn.a", 'E', 6 },
-	{ BTN_B, NULL, "btn.b", 'B', 4 },
+	{ 'F', 7 }, // UP
+	{ 'F', 4 }, // DOWN
+	{ 'F', 5 }, // LEFT
+	{ 'F', 6 }, // RIGHT
+	{ 'E', 6 }, // A
+	{ 'B', 4 }, // B
 };
 
 /* SSD1306 wired to the SPI bus, with the following additional pins: */
-static ssd1306_wiring_t ssd1306_wiring =
+static const ssd1306_wiring_t ssd1306_wiring =
 {
 	.chip_select.port = 'D',
 	.chip_select.pin = 6,
@@ -81,10 +77,9 @@ static struct arduboy_avr_mod_state {
 	ssd1306_t ssd1306;
 	bool yield;
 	uint8_t lumamap[OLED_HEIGHT_PX][OLED_WIDTH_PX];
-	uint8_t led_mask;
 } mod_s;
 
-struct mcu_t {
+typedef struct {
 	avr_t			core;
 	avr_eeprom_t	eeprom;
 	avr_flash_t		selfprog;
@@ -98,7 +93,7 @@ struct mcu_t {
 	avr_spi_t		spi;
 	avr_twi_t		twi;
 	avr_usb_t		usb;
-};
+} mcu_t;
 
 /*------------------------------------------------------------------------------------------------*/
 
@@ -197,8 +192,31 @@ static avr_cycle_count_t refresh(
 
 static uint8_t get_led_analog(struct avr_t *avr, avr_timer_comp_p comp)
 {
-	return !avr_regbit_get(avr, comp->com_pin) * 0xFF;
-	//return ~avr->data[comp->r_ocr];
+	if (avr_regbit_get(avr, comp->com) == 0) {
+		return !avr_regbit_get(avr, comp->com_pin) * 0xFF;
+	} else {
+		return ~avr->data[comp->r_ocr];
+	}
+}
+
+static inline avr_regbit_t get_port_regbit(mcu_t *mcu, char port_name, int port_idx)
+{
+	avr_io_addr_t io_addr = (&mcu->portb + (port_name - 'B'))->r_pin;
+	avr_regbit_t ret = AVR_IO_REGBIT(io_addr, port_idx);
+	return ret;
+}
+
+static inline avr_regbit_t get_rx_regbit(mcu_t *mcu)
+{
+	avr_regbit_t ret = AVR_IO_REGBIT(mcu->portb.r_port, 0);
+	return ret;
+}
+
+
+static inline avr_regbit_t get_tx_regbit(mcu_t *mcu)
+{
+	avr_regbit_t ret = AVR_IO_REGBIT(mcu->portd.r_port, 5);
+	return ret;
 }
 
 /*------------------------------------------------------------------------------------------------*/
@@ -250,29 +268,18 @@ int arduboy_avr_setup(const char *hex_file_path, bool is_tuned)
 	/* setup and connect display controller */
 	ssd1306_t *ssd1306 = &mod_s.ssd1306;
 	ssd1306_init(avr, ssd1306, OLED_WIDTH_PX, OLED_HEIGHT_PX);
-	ssd1306_connect(ssd1306, &ssd1306_wiring);
+	ssd1306_connect(ssd1306, (ssd1306_wiring_t *) &ssd1306_wiring);
 	avr_irq_register_notify(ssd1306->irq + IRQ_SSD1306_SPI_BYTE_IN, hook_ssd1306_write_data, ssd1306);
 	avr_irq_register_notify(ssd1306->irq + IRQ_SSD1306_TWI_OUT, hook_ssd1306_write_data, ssd1306);
 	memset(mod_s.lumamap, 0, sizeof(mod_s.lumamap));
-
-	/* setup and connect buttons */
-	for (int btn_idx = 0; btn_idx < BTN_COUNT; btn_idx++) {
-		struct button_info *binfo = &buttons[btn_idx];
-		binfo->irq = avr_alloc_irq(&avr->irq_pool, 0, 1, &binfo->name);
-		uint32_t iop_ctl = AVR_IOCTL_IOPORT_GETIRQ(binfo->port_name);
-		avr_irq_t *iop_irq = avr_io_getirq(avr, iop_ctl, binfo->port_idx);
-		avr_connect_irq(binfo->irq, iop_irq);
-		/* pull up pin */
-		avr_raise_irq(binfo->irq, 1);
-	}
 
 	/* Setup display render timers */
 	avr_cycle_timer_register_usec(avr, REFRESH_PERIOD_US, refresh, NULL);
 
 	/* Special tuning */
+	mcu_t *mcu = (mcu_t *) avr;
 	if (is_tuned) {
 		/* Disable timer1 and timer3 */
-		struct mcu_t *mcu = (struct mcu_t *) avr;
 		mcu->timer1.overflow.vector = _VECTOR(0);
 		mcu->timer1.icr.vector = _VECTOR(0);
 		mcu->timer1.comp[AVR_TIMER_COMPA].interrupt.vector = _VECTOR(0);
@@ -283,8 +290,14 @@ int arduboy_avr_setup(const char *hex_file_path, bool is_tuned)
 		mcu->timer3.comp[AVR_TIMER_COMPB].interrupt.vector = _VECTOR(0);
 	}
 
+	/* Clear LEDs */
+	avr_regbit_set(avr, mcu->timer1.comp[AVR_TIMER_COMPB].com_pin);
+	avr_regbit_set(avr, mcu->timer0.comp[AVR_TIMER_COMPA].com_pin);
+	avr_regbit_set(avr, mcu->timer1.comp[AVR_TIMER_COMPA].com_pin);
+	avr_regbit_set(avr, get_rx_regbit(mcu));
+	avr_regbit_set(avr, get_tx_regbit(mcu));
+
 	mod_s.avr = avr;
-	mod_s.led_mask = 0xFF;
 	LOGI("Setup AVR\n");
 	return 0;
 }
@@ -294,7 +307,7 @@ bool arduboy_avr_get_eeprom(char *p_array)
 	if (!mod_s.avr) {
 		return false;
 	}
-	struct mcu_t *mcu = (struct mcu_t *) mod_s.avr;
+	mcu_t *mcu = (mcu_t *) mod_s.avr;
 	memcpy(p_array, mcu->eeprom.eeprom, mcu->eeprom.size);
 	return true;
 }
@@ -304,21 +317,21 @@ bool arduboy_avr_set_eeprom(const char *p_array)
 	if (!mod_s.avr) {
 		return false;
 	}
-	struct mcu_t *mcu = (struct mcu_t *) mod_s.avr;
+	mcu_t *mcu = (mcu_t *) mod_s.avr;
 	memcpy(mcu->eeprom.eeprom, p_array, mcu->eeprom.size);
 	return true;
 }
 
 bool arduboy_avr_button_event(enum button_e btn_e, bool pressed)
 {
-	if (!mod_s.avr || btn_e >= BTN_COUNT) {
+        avr_t *avr = mod_s.avr;
+	if (!avr || btn_e >= BTN_COUNT) {
 		return false;
 	}
-	struct button_info *btn = &buttons[btn_e];
-	if (btn->pressed != pressed) {
-		avr_raise_irq(btn->irq, !pressed);
-		btn->pressed = pressed;
-	}
+	mcu_t *mcu = (mcu_t *) avr;
+	const struct button_info *btn = &buttons[btn_e];
+	avr_regbit_t regbit = get_port_regbit(mcu, btn->port_name, btn->port_idx);
+	avr_regbit_setto(avr, regbit, !pressed);
 	return true;
 }
 
@@ -345,12 +358,12 @@ bool arduboy_avr_get_led_state(int *leds)
 	if (!avr) {
 		return false;
 	}
-	struct mcu_t *mcu = (struct mcu_t *) avr;
+	mcu_t *mcu = (mcu_t *) avr;
 	leds[LED_RED]   = get_led_analog(avr, &mcu->timer1.comp[AVR_TIMER_COMPB]);
 	leds[LED_GREEN] = get_led_analog(avr, &mcu->timer0.comp[AVR_TIMER_COMPA]);
 	leds[LED_BLUE]  = get_led_analog(avr, &mcu->timer1.comp[AVR_TIMER_COMPA]);
-	leds[LED_RX]    = !(avr->data[mcu->portb.r_pin] & 0x01) * 0xFF;
-	leds[LED_TX]    = !(avr->data[mcu->portd.r_pin] & 0x20) * 0xFF;
+	leds[LED_RX]    = !avr_regbit_get(avr, get_rx_regbit(mcu)) * 0xFF;
+	leds[LED_TX]    = !avr_regbit_get(avr, get_tx_regbit(mcu)) * 0xFF;
 	return true;
 }
 
