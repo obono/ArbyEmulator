@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="appCode">OBN-A19</string>
-    <string name="appName">Arduboy Emulator</string>
+    <string name="appName">Arby Emulator</string>
     <string name="appNameFilePickerRead">Choose file to load</string>
     <string name="appNameFilePickerWrite">Choose file to save</string>
     <string name="appNameEeprom">EEPROM</string>

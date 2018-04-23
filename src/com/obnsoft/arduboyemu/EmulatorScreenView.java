@@ -1,6 +1,4 @@
 /*
- * Arduboy emulator using simavr on Android platform.
- *
  * Copyright (C) 2018 OBONO
  * http://d.hatena.ne.jp/OBONO/
  *
@@ -41,22 +39,22 @@ public class EmulatorScreenView extends View {
     private static final int SKIN_W = 230;
     private static final int SKIN_H = 368;
 
-    private static final int SCREEN_X = 50;
-    private static final int SCREEN_Y = 41;
+    private static final int SCREEN_X = 51;
+    private static final int SCREEN_Y = 42;
     private static final int SCREEN_W = ArduboyEmulator.SCREEN_WIDTH;
     private static final int SCREEN_H = ArduboyEmulator.SCREEN_HEIGHT;
 
-    private static final int LED_RGB_X      = 23;
+    private static final int LED_RGB_X      = 22;
     private static final int LED_RGB_Y      = 75;
     private static final int LED_UART_X     = 53;
     private static final int LED_UART_Y     = 328;
-    private static final int LED_UART_GX    = 9;
+    private static final float LED_UART_GX  = 8.5f;
     private static final int LED_FLARE_SIZE = 32;
 
-    private static final int BUTTON_DPAD_X  = 63;
-    private static final int BUTTON_DPAD_Y  = 225;
+    private static final int BUTTON_DPAD_X  = 62;
+    private static final int BUTTON_DPAD_Y  = 224;
     private static final int BUTTON_DPAD_G  = 30;
-    private static final int BUTTON_AB_X    = 173;
+    private static final int BUTTON_AB_X    = 174;
     private static final int BUTTON_AB_Y    = 233;
     private static final int BUTTON_AB_GX   = 19;
     private static final int BUTTON_AB_GY   = 8;
