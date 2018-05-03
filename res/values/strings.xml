@@ -35,7 +35,9 @@
     <string name="prefsFps">Emulation speed</string>
     <string name="prefsTuning">Disable timer1 &amp; timer3</string>
     <string name="prefsTuningSummary">It may avoid freezing. I don\'t know why.</string>
+    <string name="prefsConfirmQuit">Confirm on quit</string>
     <string name="prefsAbout">About</string>
     <string name="prefsLicense">License</string>
     <string name="prefsLicenseSummary">GNU General Public License v3.0</string>
+    <string name="prefsWebsites">Arduboy websites</string>
 </resources>

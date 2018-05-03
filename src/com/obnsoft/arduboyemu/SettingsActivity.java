@@ -18,6 +18,7 @@
 
 package com.obnsoft.arduboyemu;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
@@ -39,10 +40,10 @@ public class SettingsActivity extends PreferenceActivity
     private static final String PREFS_KEY_TUNING    = "tuning";
     private static final String PREFS_KEY_ABOUT     = "about";
     private static final String PREFS_KEY_LICENSE   = "license";
+    private static final String PREFS_KEY_WEBSITES  = "websites";
     private static final String PREFS_DEFAULT       = "default";
 
     private static final Uri URI_GPL3 = Uri.parse("https://www.gnu.org/licenses/gpl-3.0.html");
-                                                //"https://www.gnu.org/licenses/gpl-3.0.txt";
 
     private MyApplication   mApp;
 
@@ -74,6 +75,8 @@ public class SettingsActivity extends PreferenceActivity
             } else if (PREFS_KEY_LICENSE.equals(pref.getKey())) {
                 Intent intent = new Intent(Intent.ACTION_VIEW, URI_GPL3);
                 SettingsActivity.this.startActivity(intent);
+            } else if (PREFS_KEY_WEBSITES.equals(pref.getKey())) {
+                showUrlList();
             } else {
                 refreshSummary();
             }
@@ -169,6 +172,24 @@ public class SettingsActivity extends PreferenceActivity
             Utils.showMessageDialog(this, android.R.drawable.ic_dialog_alert, R.string.prefsTuning,
                     R.string.messageNoticeTuning, null);
         }
+    }
+
+    /*-----------------------------------------------------------------------*/
+
+    private void showUrlList() {
+        final String[] items = getResources().getStringArray(R.array.bookmarkArray);
+        DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                try {
+                    Uri uri = Uri.parse(items[which]);
+                    startActivity(new Intent(Intent.ACTION_VIEW, uri));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        Utils.showListDialog(this, 0, R.string.prefsWebsites, items, listener);
     }
 
 }

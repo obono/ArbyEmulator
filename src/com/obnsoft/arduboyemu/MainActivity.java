@@ -103,13 +103,17 @@ public class MainActivity extends Activity {
 
     @Override
     public void onBackPressed() {
-        Utils.showMessageDialog(this, 0, R.string.menuQuit, R.string.messageConfirmQuit,
-                new OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        finish();
-                    }
-        });
+        if (mApp.getConfirmQuit()) {
+            Utils.showMessageDialog(this, 0, R.string.menuQuit, R.string.messageConfirmQuit,
+                    new OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            MainActivity.super.onBackPressed();
+                        }
+            });
+        } else {
+            super.onBackPressed();
+        }
     }
 
     @Override
