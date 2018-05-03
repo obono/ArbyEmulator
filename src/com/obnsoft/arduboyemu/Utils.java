@@ -1,6 +1,4 @@
 /*
- * Arduboy emulator using simavr on Android platform.
- *
  * Copyright (C) 2018 OBONO
  * http://d.hatena.ne.jp/OBONO/
  *
@@ -73,11 +71,15 @@ public class Utils {
     public static void showCustomDialog(
             Context context, int iconId, int titleId, View view, final OnClickListener listener) {
         final AlertDialog dlg = new AlertDialog.Builder(context)
-                .setIcon(iconId)
-                .setTitle(titleId)
                 .setView(view)
                 .setPositiveButton(android.R.string.ok, listener)
                 .create();
+        if (titleId != 0) {
+            dlg.setTitle(titleId);
+            if (iconId != 0) {
+                dlg.setIcon(iconId);
+            }
+        }
         if (listener != null) {
             dlg.setButton(AlertDialog.BUTTON_NEGATIVE,
                     context.getText(android.R.string.cancel), (OnClickListener) null);
@@ -104,6 +106,21 @@ public class Utils {
                         return false;
                     }
                 });
+            }
+        }
+        dlg.show();
+    }
+
+    public static void showListDialog(final Context context, int iconId, int titleId,
+            String[] items, OnClickListener listener) {
+        AlertDialog dlg = new AlertDialog.Builder(context)
+                .setItems(items, listener)
+                .setNegativeButton(android.R.string.cancel, (OnClickListener) null)
+                .create();
+        if (titleId != 0) {
+            dlg.setTitle(titleId);
+            if (iconId != 0) {
+                dlg.setIcon(iconId);
             }
         }
         dlg.show();

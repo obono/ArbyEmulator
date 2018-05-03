@@ -1,6 +1,4 @@
 /*
- * Arduboy emulator using simavr on Android platform.
- *
  * Copyright (C) 2018 OBONO
  * http://d.hatena.ne.jp/OBONO/
  *
@@ -170,7 +168,8 @@ static void hook_ssd1306_write_data(struct avr_irq_t *irq, uint32_t value, void 
 {
 	ssd1306_t *ssd1306 = (ssd1306_t *) param;
 	if (ssd1306->di_pin == SSD1306_VIRT_DATA) {
-		if (ssd1306->cursor.page == 0 && ssd1306->cursor.column == 0 &&
+		if (ssd1306->cursor.page == SSD1306_VIRT_PAGES - 1 &&
+				ssd1306->cursor.column == SSD1306_VIRT_COLUMNS - 1 &&
 				ssd1306_get_flag(ssd1306, SSD1306_FLAG_DIRTY)) {
 			update_lumamap(ssd1306);
 			ssd1306_set_flag(ssd1306, SSD1306_FLAG_DIRTY, 0);

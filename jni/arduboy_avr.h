@@ -1,6 +1,4 @@
 /*
- * Arduboy emulator using simavr on Android platform.
- *
  * Copyright (C) 2018 OBONO
  * http://d.hatena.ne.jp/OBONO/
  *
@@ -25,7 +23,7 @@
 #define OLED_WIDTH_PX (128)
 #define OLED_HEIGHT_PX (64)
 
-#define LOG_TAG "ArduboyEmulator"
+#define LOG_TAG "ArbyEmulator"
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 #define LOGW(...) __android_log_print(ANDROID_LOG_WARN, LOG_TAG, __VA_ARGS__)
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)

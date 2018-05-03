@@ -1,6 +1,4 @@
 /*
- * Arduboy emulator using simavr on Android platform.
- *
  * Copyright (C) 2018 OBONO
  * http://d.hatena.ne.jp/OBONO/
  *
@@ -36,11 +34,13 @@ public class MyApplication extends Application {
 
     private static final String PREFS_KEY_FPS           = "fps";
     private static final String PREFS_KEY_TUNING        = "tuning";
+    private static final String PREFS_KEY_CONFIRMQUIT   = "confirm_quit";
     private static final String PREFS_KEY_PATH_FLASH    = "path_flash";
     private static final String PREFS_KEY_PATH_EEPROM   = "path_eeprom";
 
     private static final String PREFS_DEFAULT_FPS       = "60";
     private static final boolean PREFS_DEFAULT_TUNING   = false;
+    private static final boolean PREFS_DEFAULT_CONFIRMQUIT = true;
 
     private ArduboyEmulator     mArduboyEmulator;
     private BroadcastReceiver   mChargeStateReveiver;
@@ -94,6 +94,10 @@ public class MyApplication extends Application {
 
     public boolean getEmulationTuning() {
         return getSharedPreferences().getBoolean(PREFS_KEY_TUNING, PREFS_DEFAULT_TUNING);
+    }
+
+    public boolean getConfirmQuit() {
+        return getSharedPreferences().getBoolean(PREFS_KEY_CONFIRMQUIT, PREFS_DEFAULT_CONFIRMQUIT);
     }
 
     public String getPathFlash() {

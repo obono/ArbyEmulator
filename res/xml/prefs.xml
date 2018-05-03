@@ -15,15 +15,14 @@
             android:title="@string/prefsTuning"
             android:summary="@string/prefsTuningSummary"
             />
+        <CheckBoxPreference
+            android:key="confirm_quit"
+            android:defaultValue="true"
+            android:title="@string/prefsConfirmQuit"
+            />
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/prefsCategoryInformation" >
-        <!-- EditTextPreference
-            android:key="key"
-            android:defaultValue="defaultValue"
-            android:title="@string/prefs_title"
-            android:inputType="text"
-            / -->
         <Preference
             android:key="about"
             android:title="@string/prefsAbout"
@@ -33,6 +32,10 @@
             android:title="@string/prefsLicense"
             android:summary="@string/prefsLicenseSummary"
             />
-    </PreferenceCategory>
+        <Preference
+            android:key="websites"
+            android:title="@string/prefsWebsites"
+            />
+        </PreferenceCategory>
 
 </PreferenceScreen>
