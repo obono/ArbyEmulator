@@ -1,6 +1,7 @@
 [submodule "jni/simavr"]
 	path = jni/simavr
-	url = https://github.com/buserror/simavr.git
+	url = https://github.com/dxxb/simavr-arduboy.git
+	branch = arduboy
 [submodule "jni/elfutils"]
 	path = jni/elfutils
 	url = https://android.googlesource.com/platform/external/elfutils
