@@ -28,18 +28,29 @@ import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ImageButton;
+import android.widget.RelativeLayout;
+import android.widget.Spinner;
 
 public class MainActivity extends Activity {
 
     private static final int REQUEST_OPEN_FLASH = 1;
+    private static final String FLASH_WORK_FILE_NAME = "work.hex";
 
     private MyApplication       mApp;
     private ArduboyEmulator     mArduboyEmulator;
     private EmulatorScreenView  mEmulatorScreenView;
+    private RelativeLayout      mLayoutToolbar;
+    private Spinner             mSpinnerToolFps;
+    private ImageButton         mButtonToolCaptureMovie;
+    private String              mCurrentPath;
 
     /*-----------------------------------------------------------------------*/
 
@@ -49,7 +60,24 @@ public class MainActivity extends Activity {
         setContentView(R.layout.main_activity);
         mApp = (MyApplication) getApplication();
         mArduboyEmulator = mApp.getArduboyEmulator();
+
         mEmulatorScreenView = (EmulatorScreenView) findViewById(R.id.emulatorScreenView);
+        mLayoutToolbar = (RelativeLayout) findViewById(R.id.relativeLayoutToolBar);
+        mSpinnerToolFps = (Spinner) findViewById(R.id.spinnerToolFps);
+        mButtonToolCaptureMovie = (ImageButton) findViewById(R.id.buttonToolCaptureMovie);
+
+        mSpinnerToolFps.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                mApp.setEmulationFpsByItemPos(position);
+                mArduboyEmulator.setFps(mApp.getEmulationFps());
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                // do nothing
+            }
+        });
+
         Intent intent = getIntent();
         if (intent != null) {
             handleIntent(intent);
@@ -118,15 +146,21 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onPause() {
+        if (mArduboyEmulator.isCapturing()) {
+            mArduboyEmulator.stopCapturing();
+        }
         mArduboyEmulator.stopEmulation();
         super.onPause();
     }
 
     @Override
     protected void onResume() {
+        super.onResume();
+        mLayoutToolbar.setVisibility((mApp.getShowToolbar()) ? View.VISIBLE : View.INVISIBLE);
+        mSpinnerToolFps.setSelection(mApp.getEmulationFpsItemPos(), false);
+        refreshCaptureVideoButtonColor();
         mArduboyEmulator.bindEmulatorView(mEmulatorScreenView);
         mArduboyEmulator.startEmulation();
-        super.onResume();
     }
 
     @Override
@@ -138,11 +172,46 @@ public class MainActivity extends Activity {
         super.onDestroy();
     }
 
+    public void onClickReset(View v) {
+        if (mArduboyEmulator.isEmulating()) {
+            startEmulation(mCurrentPath);
+        }
+    }
+
+    public void onClickCaptureShot(View v) {
+        if (mArduboyEmulator.isEmulating()) {
+            mArduboyEmulator.requestOneShot();
+        }
+    }
+
+    public void onClickCaptureMovie(View v) {
+        if (mArduboyEmulator.isEmulating()) {
+            if (!mArduboyEmulator.isCapturing()) {
+                mArduboyEmulator.startCapturing();
+            } else {
+                mArduboyEmulator.stopCapturing();
+            }
+            refreshCaptureVideoButtonColor();
+        }
+    }
+
     /*-----------------------------------------------------------------------*/
 
     private void startEmulation(String path) {
-        if (mArduboyEmulator.initializeEmulation(path)) {
+        if (path.toLowerCase(Locale.getDefault()).endsWith(FilePickerActivity.EXT_ARDUBOY)) {
+            File outFile = Utils.generateTempFile(mApp, FLASH_WORK_FILE_NAME);
+            if (ArduboyUtils.extractHexFromArduboy(new File(path), outFile)) {
+                path = outFile.getAbsolutePath();
+            } else {
+                outFile.delete();
+                path = null;
+            }
+        }
+        if (path != null && mArduboyEmulator.initializeEmulation(path)) {
+            mCurrentPath = path;
             mArduboyEmulator.startEmulation();
+        } else {
+            Utils.showToast(this, R.string.messageEmulateFailed);
         }
     }
 
@@ -185,6 +254,16 @@ public class MainActivity extends Activity {
                     }
                 }
             });
+        }
+    }
+
+    private void refreshCaptureVideoButtonColor() {
+        if (mArduboyEmulator.isEmulating()) {
+            if (mArduboyEmulator.isCapturing()) {
+                mButtonToolCaptureMovie.setColorFilter(Color.RED);
+            } else {
+                mButtonToolCaptureMovie.setColorFilter(null);
+            }
         }
     }
 

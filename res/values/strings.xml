@@ -9,6 +9,9 @@
     <string name="image">Image</string>
     <string name="fileName">filename</string>
     <string name="menuOpen">Open Flash image</string>
+    <string name="menuReset">Reset</string>
+    <string name="menuCaptureShot">Capture screenshot</string>
+    <string name="menuCaptureMovie">Capture movie</string>
     <string name="menuEeprom">Control EEPROM</string>
     <string name="menuSettings">Settings</string>
     <string name="menuClear">Clear EEPROM</string>
@@ -17,6 +20,7 @@
     <string name="menuUpper">Upper</string>
     <string name="menuBack">Back</string>
     <string name="menuQuit">Quit application</string>
+    <string name="messageEmulateFailed">Falied to emulate!</string>
     <string name="messageNoFiles">No files</string>
     <string name="messageInvalid">Invalid file name</string>
     <string name="messageNewFile">New file</string>
@@ -26,12 +30,17 @@
     <string name="messageSaveFailed">Failed to save!</string>
     <string name="messageDownloading">Downloading&#8230;</string>
     <string name="messageDownloadFailed">Failed to download!</string>
+    <string name="messageCaptureShot">Saved screenshot as \&quot;%s\&quot;</string>
+    <string name="messageCaptureStart">Capturing&#8230;</string>
+    <string name="messageCaptureMovie">Saved movie as \&quot;%s\&quot;</string>
+    <string name="messageCaptureFailed">Failed to capture!</string>
     <string name="messageConfirmLoad">Are you sure to load?</string>
     <string name="messageConfirmClear">Are you sure to clear?</string>
     <string name="messageConfirmQuit">Are you sure to quit?</string>
     <string name="messageNoticeTuning">This configuration is applied after restarting emulation.</string>
     <string name="prefsCategorySettings">Emulator settings</string>
     <string name="prefsCategoryInformation">Information</string>
+    <string name="prefsToolbar">Show toolbar</string>
     <string name="prefsFps">Emulation speed</string>
     <string name="prefsTuning">Disable timer1 &amp; timer3</string>
     <string name="prefsTuningSummary">It may avoid freezing. I don\'t know why.</string>

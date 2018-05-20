@@ -2,6 +2,11 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <PreferenceCategory android:title="@string/prefsCategorySettings" >
+        <CheckBoxPreference
+            android:key="toolbar"
+            android:defaultValue="false"
+            android:title="@string/prefsToolbar"
+            />
         <ListPreference
             android:key="fps"
             android:defaultValue="60"

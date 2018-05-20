@@ -27,12 +27,16 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Locale;
+import java.util.Calendar;
 
 import com.obnsoft.arduboyemu.Utils.CancelCallback;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.media.MediaScannerConnection;
+import android.os.Environment;
+import android.os.Handler;
+import android.text.format.DateFormat;
 
 public class ArduboyEmulator {
 
@@ -50,15 +54,22 @@ public class ArduboyEmulator {
     private static final int LEDS_SIZE  = 5;
 
     private static final int ONE_SECOND = 1000;
-    private static final String FLASH_WORK_FILE_NAME = "work.hex";
-    private static final String EEPROM_FILE_NAME = "eeprom.bin";
 
+    private static final String EEPROM_FILE_NAME = "eeprom.bin";
     private static final CancelCallback EEPROM_CALLBACK = new CancelCallback() {
         @Override
         public boolean isCencelled(long length) {
             return (length >= EEPROM_SIZE);
         }
     };
+
+    private static final String CAPTURE_DIR_NAME = "ArbyEmulator";
+    private static final String CAPTURE_WORK_FILE_NAME = "temp.gif";
+    private static final String CAPTURE_FILE_NAME_FORMAT = "yyyyMMddkkmmss'.gif'";
+    private static final File CAPTURE_DIR = new File(
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
+            CAPTURE_DIR_NAME);
+    private static final File CAPTURE_WORK_FILE = new File(CAPTURE_DIR, CAPTURE_WORK_FILE_NAME);
 
     private MyApplication       mApp;
     private EmulatorScreenView  mEmulatorView;
@@ -67,17 +78,28 @@ public class ArduboyEmulator {
     private boolean     mIsEmulationAvailable;
     private boolean     mIsEmulating;
     private boolean     mIsCharging;
+    private boolean     mIsOneShot;
+    private boolean     mIsCapturing;
+    private int         mFps;
     private byte[]      mEeprom;
+    private GifEncoder  mGifEncoder;
 
+    /*-----------------------------------------------------------------------*/
+    /*                              Emulation                                */
     /*-----------------------------------------------------------------------*/
 
     public ArduboyEmulator(MyApplication app) {
         mApp = app;
         loadEeprom();
+        mGifEncoder = new GifEncoder();
     }
 
     public boolean isEmulating() {
         return mIsEmulating;
+    }
+
+    public void setFps(int fps) {
+        mFps = fps;
     }
 
     public synchronized void setCharging(boolean isCharging) {
@@ -93,20 +115,9 @@ public class ArduboyEmulator {
         setCharging(mIsCharging);
     }
 
-    /*-----------------------------------------------------------------------*/
-
     public synchronized boolean initializeEmulation(String path) {
         if (mIsEmulationAvailable) {
             finishEmulation();
-        }
-        if (path.toLowerCase(Locale.getDefault()).endsWith(FilePickerActivity.EXT_ARDUBOY)) {
-            File outFile = Utils.generateTempFile(mApp, FLASH_WORK_FILE_NAME);
-            if (!ArduboyUtils.extractHexFromArduboy(new File(path), outFile)) {
-                mIsEmulationAvailable = false;
-                outFile.delete();
-                return false;
-            }
-            path = outFile.getAbsolutePath();
         }
         mIsEmulationAvailable = Native.setup(path, mApp.getEmulationTuning());
         return mIsEmulationAvailable;
@@ -119,10 +130,11 @@ public class ArduboyEmulator {
         if (mEmulationThread != null) {
             stopEmulation();
         }
+        final Handler handler = new Handler();
         mEmulationThread = new Thread(new Runnable() {
             @Override
             public void run() {
-                int fps = mApp.getEmulationFps();
+                int fps = mFps;
                 int[] pixels = new int[PIXELS_SIZE];
                 int[] leds = new int[LEDS_SIZE];
                 long baseTime = System.currentTimeMillis();
@@ -145,19 +157,35 @@ public class ArduboyEmulator {
                                 (leds[LED_RX] != 0), (leds[LED_TX] != 0), mIsCharging);
                         mEmulatorView.postInvalidate();
                     }
+                    if (mIsOneShot) {
+                        final File file = generateCaptureFile();
+                        if (mGifEncoder.oneShot(file, pixels)) {
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    notifyCaptured(file, false);
+                                }
+                            });
+                        }
+                        mIsOneShot = false;
+                    }
+                    if (mIsCapturing) {
+                        mGifEncoder.addFrame(pixels);
+                    }
                     if (++frames >= fps) {
                         baseTime += ONE_SECOND;
                         frames = 0;
                     }
                     long currentTime = System.currentTimeMillis();
                     long targetTime = baseTime + frames * ONE_SECOND / fps;
-                    if (currentTime < targetTime) {
+                    if (mFps == fps && currentTime < targetTime) {
                         try {
                             Thread.sleep(targetTime - currentTime);
                         } catch (InterruptedException e) {
                             // do nothing
                         }
                     } else {
+                        fps = mFps;
                         baseTime = currentTime;
                         frames = 0;
                     }
@@ -194,6 +222,8 @@ public class ArduboyEmulator {
         }
     }
 
+    /*-----------------------------------------------------------------------*/
+    /*                            Control EEPROM                             */
     /*-----------------------------------------------------------------------*/
 
     public byte[] getEeprom() {
@@ -288,4 +318,69 @@ public class ArduboyEmulator {
         }
     }
 
+    /*-----------------------------------------------------------------------*/
+    /*                            Screen Capture                             */
+    /*-----------------------------------------------------------------------*/
+
+    public boolean isCapturing() {
+        return mIsCapturing;
+    }
+
+    public synchronized boolean requestOneShot() {
+        if (mIsEmulating) {
+            mIsOneShot = true;
+        }
+        return mIsOneShot;
+    }
+
+    public synchronized boolean startCapturing() {
+        if (!mIsEmulating || mIsCapturing) {
+            return false;
+        }
+        if (mGifEncoder.start(getCaptureWorkFile())) {
+            Utils.showToast(mApp, R.string.messageCaptureStart);
+            mIsCapturing = true;
+        }
+        return mIsCapturing;
+    }
+
+    public synchronized boolean stopCapturing() {
+        if (!mIsEmulating || !mIsCapturing) {
+            return false;
+        }
+        mIsCapturing = false;
+        File file = generateCaptureFile();
+        if (mGifEncoder.finish(file)) {
+            notifyCaptured(file, true);
+            return true;
+        } else {
+            Utils.showToast(mApp, R.string.messageCaptureFailed);
+            return false;
+        }
+    }
+
+    private void ensureCaptureDir() {
+        if (!CAPTURE_DIR.exists()) {
+            CAPTURE_DIR.mkdirs();
+        }
+    }
+
+    private File getCaptureWorkFile() {
+        ensureCaptureDir();
+        return CAPTURE_WORK_FILE;
+
+    }
+
+    private File generateCaptureFile() {
+        ensureCaptureDir();
+        return new File(CAPTURE_DIR, DateFormat.format(
+                CAPTURE_FILE_NAME_FORMAT, Calendar.getInstance()).toString());
+    }
+
+    private void notifyCaptured(File file, boolean isMovie) {
+        MediaScannerConnection.scanFile(mApp, new String[] { file.getAbsolutePath() }, null, null);
+        int stringId = (isMovie) ? R.string.messageCaptureMovie : R.string.messageCaptureShot;
+        String message = String.format(mApp.getString(stringId), file.getName());
+        Utils.showToast(mApp, message);
+    }
 }

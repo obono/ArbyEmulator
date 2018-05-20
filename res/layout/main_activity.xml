@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     tools:context="com.obnsoft.androidemu.MainActivity" >
 
-     <com.obnsoft.arduboyemu.EmulatorScreenView
+    <com.obnsoft.arduboyemu.EmulatorScreenView
         android:id="@+id/emulatorScreenView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -13,4 +13,49 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentRight="true" />
 
+    <RelativeLayout
+        android:id="@+id/relativeLayoutToolBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:background="@drawable/background_toolbar" >
+
+        <ImageButton
+            android:id="@+id/buttonToolReset"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true"
+            android:src="@drawable/ic_menu_reset_flash"
+            android:contentDescription="@string/menuReset"
+            android:onClick="onClickReset" />
+        <Spinner
+            android:id="@+id/spinnerToolFps"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@id/buttonToolReset"
+            android:layout_toRightOf="@id/buttonToolReset"
+            android:entries="@array/entriesFps" />
+        <ImageButton
+            android:id="@+id/buttonToolCaptureMovie"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentRight="true"
+            android:src="@drawable/ic_menu_capture_movie"
+            android:contentDescription="@string/menuCaptureMovie"
+            android:onClick="onClickCaptureMovie" />
+        <ImageButton
+            android:id="@+id/buttonToolCaptureShot"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_toLeftOf="@id/buttonToolCaptureMovie"
+            android:src="@drawable/ic_menu_capture_shot"
+            android:contentDescription="@string/menuCaptureShot"
+            android:onClick="onClickCaptureShot" />
+        
+    </RelativeLayout>
 </RelativeLayout>

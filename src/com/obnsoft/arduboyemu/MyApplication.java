@@ -19,6 +19,7 @@
 package com.obnsoft.arduboyemu;
 
 import java.io.File;
+import java.util.Arrays;
 
 import android.app.Application;
 import android.content.BroadcastReceiver;
@@ -32,12 +33,14 @@ import android.preference.PreferenceManager;
 
 public class MyApplication extends Application {
 
+    private static final String PREFS_KEY_TOOLBAR       = "toolbar";
     private static final String PREFS_KEY_FPS           = "fps";
     private static final String PREFS_KEY_TUNING        = "tuning";
     private static final String PREFS_KEY_CONFIRMQUIT   = "confirm_quit";
     private static final String PREFS_KEY_PATH_FLASH    = "path_flash";
     private static final String PREFS_KEY_PATH_EEPROM   = "path_eeprom";
 
+    private static final boolean PREFS_DEFAULT_TOOLBAR  = false;
     private static final String PREFS_DEFAULT_FPS       = "60";
     private static final boolean PREFS_DEFAULT_TUNING   = false;
     private static final boolean PREFS_DEFAULT_CONFIRMQUIT = true;
@@ -88,8 +91,26 @@ public class MyApplication extends Application {
         return PreferenceManager.getDefaultSharedPreferences(this);
     }
 
+    public boolean getShowToolbar() {
+        return getSharedPreferences().getBoolean(PREFS_KEY_TOOLBAR, PREFS_DEFAULT_TOOLBAR);
+    }
+
+    public String getEmulationFpsString() {
+        return getSharedPreferences().getString(PREFS_KEY_FPS, PREFS_DEFAULT_FPS);
+    }
+
     public int getEmulationFps() {
-        return Integer.parseInt(getSharedPreferences().getString(PREFS_KEY_FPS, PREFS_DEFAULT_FPS));
+        return Integer.parseInt(getEmulationFpsString());
+    }
+
+    public int getEmulationFpsItemPos() {
+        String[] ary = getResources().getStringArray(R.array.entryValuesFps);
+        return Arrays.asList(ary).indexOf(getEmulationFpsString());
+    }
+
+    public boolean setEmulationFpsByItemPos(int itemPos) {
+        String[] ary = getResources().getStringArray(R.array.entryValuesFps);
+        return putStringToSharedPreferences(PREFS_KEY_FPS, ary[itemPos]);
     }
 
     public boolean getEmulationTuning() {
@@ -122,9 +143,9 @@ public class MyApplication extends Application {
         return putStringToSharedPreferences(PREFS_KEY_PATH_EEPROM, path);
     }
 
-    public boolean putStringToSharedPreferences(String key, String path) {
+    public boolean putStringToSharedPreferences(String key, String value) {
         SharedPreferences.Editor editor = getSharedPreferences().edit();
-        editor.putString(key, path);
+        editor.putString(key, value);
         return editor.commit();
     }
 
