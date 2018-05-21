@@ -8,6 +8,7 @@ https://play.google.com/store/apps/details?id=com.obnsoft.arduboyemu \
  - LED emulation.
  - Speed control.
  - Backup and restore EEPROM data.
+ - Screen capture.
 
 ## Restrictions
  - Audio is unsupported.
@@ -21,7 +22,7 @@ Arduboy is a registered trademark of Arduboy, Inc. This application is not creat
 This comes with no warranties. This should be used at your own risk. The author of this has no responsibility.
 
 ### Libraries
- - [simavr](https://github.com/buserror/simavr)
+ - [simavr](https://github.com/dxxb/simavr-arduboy)
  - [Red Hat elfutils](https://android.googlesource.com/platform/external/elfutils)
 
 ### Image resources
