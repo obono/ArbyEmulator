@@ -16,7 +16,8 @@
     </string-array>
     <string-array name="bookmarkArray">
         <item>https://www.arduboy.com/</item>
+        <item>https://obono.github.io/ArduboyWorks/?repo.json</item>
         <item>http://www.crait.net/arduboy/</item>
-        <item>http://arduboy.ried.cl/</item>
+        <item>https://arduboy.ried.cl/</item>
     </string-array>
 </resources>
