@@ -75,7 +75,7 @@ static const ssd1306_wiring_t ssd1306_wiring =
 static struct arduboy_avr_mod_state {
 	struct avr_t *avr;
 	ssd1306_t ssd1306;
-	bool yield;
+	bool yield, is_refresh_postpone;
 	uint8_t lumamap[OLED_HEIGHT_PX][OLED_WIDTH_PX];
 } mod_s;
 
@@ -168,9 +168,14 @@ static void hook_ssd1306_write_data(struct avr_irq_t *irq, uint32_t value, void 
 {
 	ssd1306_t *ssd1306 = (ssd1306_t *) param;
 	if (ssd1306->di_pin == SSD1306_VIRT_DATA) {
-		if (ssd1306->cursor.page == SSD1306_VIRT_PAGES - 1 &&
-				ssd1306->cursor.column == SSD1306_VIRT_COLUMNS - 1 &&
-				ssd1306_get_flag(ssd1306, SSD1306_FLAG_DIRTY)) {
+		bool is_timing;
+		if (mod_s.is_refresh_postpone) {
+			is_timing = ssd1306->cursor.page == SSD1306_VIRT_PAGES - 1 &&
+					ssd1306->cursor.column == SSD1306_VIRT_COLUMNS - 1;
+		} else {
+			is_timing = ssd1306->cursor.page == 0 && ssd1306->cursor.column == 0;
+		}
+		if (is_timing && ssd1306_get_flag(ssd1306, SSD1306_FLAG_DIRTY)) {
 			update_lumamap(ssd1306);
 			ssd1306_set_flag(ssd1306, SSD1306_FLAG_DIRTY, 0);
 		}
@@ -320,6 +325,12 @@ bool arduboy_avr_set_eeprom(const char *p_array)
 	}
 	mcu_t *mcu = (mcu_t *) mod_s.avr;
 	memcpy(mcu->eeprom.eeprom, p_array, mcu->eeprom.size);
+	return true;
+}
+
+bool arduboy_avr_set_refresh_timing(bool is_postpone)
+{
+	mod_s.is_refresh_postpone = is_postpone;
 	return true;
 }
 

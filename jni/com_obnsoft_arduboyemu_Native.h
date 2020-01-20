@@ -7,6 +7,20 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#undef com_obnsoft_arduboyemu_Native_BUTTON_UP
+#define com_obnsoft_arduboyemu_Native_BUTTON_UP 0L
+#undef com_obnsoft_arduboyemu_Native_BUTTON_DOWN
+#define com_obnsoft_arduboyemu_Native_BUTTON_DOWN 1L
+#undef com_obnsoft_arduboyemu_Native_BUTTON_LEFT
+#define com_obnsoft_arduboyemu_Native_BUTTON_LEFT 2L
+#undef com_obnsoft_arduboyemu_Native_BUTTON_RIGHT
+#define com_obnsoft_arduboyemu_Native_BUTTON_RIGHT 3L
+#undef com_obnsoft_arduboyemu_Native_BUTTON_A
+#define com_obnsoft_arduboyemu_Native_BUTTON_A 4L
+#undef com_obnsoft_arduboyemu_Native_BUTTON_B
+#define com_obnsoft_arduboyemu_Native_BUTTON_B 5L
+#undef com_obnsoft_arduboyemu_Native_BUTTON_MAX
+#define com_obnsoft_arduboyemu_Native_BUTTON_MAX 6L
 /*
  * Class:     com_obnsoft_arduboyemu_Native
  * Method:    setup
@@ -30,6 +44,14 @@ JNIEXPORT jboolean JNICALL Java_com_obnsoft_arduboyemu_Native_getEeprom
  */
 JNIEXPORT jboolean JNICALL Java_com_obnsoft_arduboyemu_Native_setEeprom
   (JNIEnv *, jclass, jbyteArray);
+
+/*
+ * Class:     com_obnsoft_arduboyemu_Native
+ * Method:    setRefreshTiming
+ * Signature: (Z)Z
+ */
+JNIEXPORT jboolean JNICALL Java_com_obnsoft_arduboyemu_Native_setRefreshTiming
+  (JNIEnv *, jclass, jboolean);
 
 /*
  * Class:     com_obnsoft_arduboyemu_Native

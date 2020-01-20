@@ -81,6 +81,17 @@ JNIEXPORT jboolean JNICALL Java_com_obnsoft_arduboyemu_Native_setEeprom(
 
 /*
  * Class:     com_obnsoft_arduboyemu_Native
+ * Method:    setRefreshTiming
+ * Signature: (Z)Z
+ */
+JNIEXPORT jboolean JNICALL Java_com_obnsoft_arduboyemu_Native_setRefreshTiming(
+        JNIEnv *env, jclass obj, jboolean is_postpone) {
+    jboolean ret = arduboy_avr_set_refresh_timing(is_postpone);
+    return ret;
+}
+
+/*
+ * Class:     com_obnsoft_arduboyemu_Native
  * Method:    buttonEvent
  * Signature: (IZ)Z
  */
