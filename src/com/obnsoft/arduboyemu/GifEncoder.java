@@ -78,8 +78,9 @@ public class GifEncoder {
         boolean ret = false;
         try {
             if (mIsFirstFrame) {
-                writeLSD(mWorkStream); // logical screen descriptior
+                writeLSD(mWorkStream); // logical screen descriptor
                 writePalette(mWorkStream); // global color table
+                writeApplicationExtension(mWorkStream); // application extension
                 mIsFirstFrame = false;
             }
             byte[] indexedPixels = analyzePixels(pixels); // build map pixels
@@ -127,7 +128,7 @@ public class GifEncoder {
         try {
             FileOutputStream out = new FileOutputStream(file);
             writeHeader(out); // header
-            writeLSD(out); // logical screen descriptior
+            writeLSD(out); // logical screen descriptor
             writePalette(out); // global color table
             byte[] indexedPixels = analyzePixels(pixels); // build map pixels
             writeImageBlock(out, indexedPixels); // write image block
@@ -184,6 +185,20 @@ public class GifEncoder {
      */
     private void writePalette(OutputStream out) throws IOException {
         out.write(PALETTE);
+    }
+
+    /**
+     * Writes Application Extension
+     */
+    private void writeApplicationExtension(OutputStream out) throws IOException {
+        out.write(0x21); // extension introducer
+        out.write(0xff); // extension label
+        out.write(11); // data block size
+        writeString(out, "NETSCAPE2.0"); // application identifier & authentication code
+        out.write(3); // data block size
+        out.write(0x01); // constant 0x01
+        writeShort(out, 0); // repeat time = 0 (eternal)
+        out.write(0); // block terminator
     }
 
     /**
