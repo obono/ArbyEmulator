@@ -15,6 +15,12 @@
             android:entryValues="@array/entryValuesFps"
             />
         <CheckBoxPreference
+            android:key="refresh"
+            android:defaultValue="false"
+            android:title="@string/prefsRefresh"
+            android:summary="@string/prefsRefreshSummary"
+            />
+        <CheckBoxPreference
             android:key="tuning"
             android:defaultValue="false"
             android:title="@string/prefsTuning"

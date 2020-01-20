@@ -120,6 +120,7 @@ public class ArduboyEmulator {
             finishEmulation();
         }
         mIsEmulationAvailable = Native.setup(path, mApp.getEmulationTuning());
+        Native.setRefreshTiming(mApp.getEmulationPostRefresh());
         return mIsEmulationAvailable;
     }
 

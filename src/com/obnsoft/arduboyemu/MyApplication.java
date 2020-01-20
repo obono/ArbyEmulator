@@ -35,6 +35,7 @@ public class MyApplication extends Application {
 
     private static final String PREFS_KEY_TOOLBAR       = "toolbar";
     private static final String PREFS_KEY_FPS           = "fps";
+    private static final String PREFS_KEY_REFRESH       = "refresh";
     private static final String PREFS_KEY_TUNING        = "tuning";
     private static final String PREFS_KEY_CONFIRMQUIT   = "confirm_quit";
     private static final String PREFS_KEY_PATH_FLASH    = "path_flash";
@@ -42,6 +43,7 @@ public class MyApplication extends Application {
 
     private static final boolean PREFS_DEFAULT_TOOLBAR  = false;
     private static final String PREFS_DEFAULT_FPS       = "60";
+    private static final boolean PREFS_DEFAULT_REFRESH  = false;
     private static final boolean PREFS_DEFAULT_TUNING   = false;
     private static final boolean PREFS_DEFAULT_CONFIRMQUIT = true;
 
@@ -111,6 +113,10 @@ public class MyApplication extends Application {
     public boolean setEmulationFpsByItemPos(int itemPos) {
         String[] ary = getResources().getStringArray(R.array.entryValuesFps);
         return putStringToSharedPreferences(PREFS_KEY_FPS, ary[itemPos]);
+    }
+
+    public boolean getEmulationPostRefresh() {
+        return getSharedPreferences().getBoolean(PREFS_KEY_REFRESH, PREFS_DEFAULT_REFRESH);
     }
 
     public boolean getEmulationTuning() {

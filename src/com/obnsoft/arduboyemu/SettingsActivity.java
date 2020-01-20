@@ -37,6 +37,7 @@ import android.view.MenuItem;
 public class SettingsActivity extends PreferenceActivity
         implements OnSharedPreferenceChangeListener {
 
+    private static final String PREFS_KEY_REFRESH   = "refresh";
     private static final String PREFS_KEY_TUNING    = "tuning";
     private static final String PREFS_KEY_ABOUT     = "about";
     private static final String PREFS_KEY_LICENSE   = "license";
@@ -166,8 +167,11 @@ public class SettingsActivity extends PreferenceActivity
     }
 
     @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+    public void onSharedPreferenceChanged(SharedPreferences prefs, String key) {
         mFragment.setSummary(key);
+        if (PREFS_KEY_REFRESH.equals(key)) {
+            Native.setRefreshTiming(prefs.getBoolean(PREFS_KEY_REFRESH, false));
+        }
         if (PREFS_KEY_TUNING.equals(key)) {
             Utils.showMessageDialog(this, android.R.drawable.ic_dialog_alert, R.string.prefsTuning,
                     R.string.messageNoticeTuning, null);
